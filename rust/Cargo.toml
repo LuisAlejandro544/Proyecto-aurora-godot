@@ -1,0 +1,17 @@
+# Manifiesto del módulo Rust (GDExtension) que se conectará con Godot 4.7.
+# Aquí solo se declaran las dependencias base; la lógica del juego se añadirá después.
+
+[package]
+name = "shooter_core"
+version = "0.1.0"
+edition = "2024"
+description = "Núcleo GDExtension en Rust para juego móvil de disparos en Godot 4.7."
+
+[lib]
+# cdylib es obligatorio para generar la librería dinámica (.so) que Android y Godot cargan.
+name = "shooter_core"
+crate-type = ["cdylib"]
+
+[dependencies]
+# Bindings oficiales de godot-rust (gdext) apuntando a la API exacta de Godot 4.7.
+godot = { version = "0.5.5", features = ["api-4-7"] }

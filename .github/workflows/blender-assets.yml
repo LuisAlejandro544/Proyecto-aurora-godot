@@ -1,0 +1,80 @@
+# Flujo de GitHub Actions que ejecuta Blender sin interfaz (headless)
+# usando los scripts separados de Python para generar:
+# 1. Modelos GLB listos para Godot 4.7 (arma, efectos y ciudad destruida)
+# 2. Capturas PNG de vista previa para descargarlas y revisarlas visualmente.
+
+name: Generate Blender 3D Assets
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main", "master" ]
+    paths:
+      - "scripts/blender/**"
+      - ".github/workflows/blender-assets.yml"
+
+jobs:
+  blender-assets:
+    name: Generar Modelos 3D y Previews (Blender Headless)
+    runs-on: ubuntu-latest
+
+    env:
+      BLENDER_MAJOR_MINOR: "5.2"
+      BLENDER_VERSION: "5.2.4"
+
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      # 1. Librerías del sistema requeridas por el binario Linux de Blender
+      - name: Instalar dependencias del sistema para Blender headless
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xz-utils libxi6 libgl1 libxxf86vm1 libxfixes3 libxrender1 libxkbcommon0 libsm6 libgomp1
+
+      # 2. Caché de Blender portable para no re-descargarlo en futuras ejecuciones
+      - name: Caché de Blender ${{ env.BLENDER_VERSION }}
+        id: cache-blender
+        uses: actions/cache@v4
+        with:
+          path: ~/blender-${{ env.BLENDER_VERSION }}
+          key: ${{ runner.os }}-blender-${{ env.BLENDER_VERSION }}
+
+      - name: Descargar Blender ${{ env.BLENDER_VERSION }}
+        if: steps.cache-blender.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/blender-${{ env.BLENDER_VERSION }}
+          curl -sL "https://download.blender.org/release/Blender${{ env.BLENDER_MAJOR_MINOR }}/blender-${{ env.BLENDER_VERSION }}-linux-x64.tar.xz" -o /tmp/blender.tar.xz
+          tar -xf /tmp/blender.tar.xz -C ~/blender-${{ env.BLENDER_VERSION }} --strip-components=1
+          rm -f /tmp/blender.tar.xz
+
+      - name: Añadir Blender al PATH y verificar versión
+        run: |
+          echo "$HOME/blender-${{ env.BLENDER_VERSION }}" >> $GITHUB_PATH
+          ~/blender-${{ env.BLENDER_VERSION }}/blender --version
+
+      # 3. Ejecutar cada script Python por separado en Blender sin interfaz
+      - name: Generar rifle clásico 7.62 (animaciones disparo, recarga e idle)
+        run: blender --background --python scripts/blender/weapon_classic_rifle.py -- godot/assets/models/classic_assault_rifle.glb
+
+      - name: Generar efecto de fogonazo (muzzle flash)
+        run: blender --background --python scripts/blender/fx_muzzle_flash.py -- godot/assets/models/muzzle_flash_fx.glb
+
+      - name: Generar proyectil y casquillo con caída animada
+        run: blender --background --python scripts/blender/fx_bullet_and_casing.py
+
+      - name: Generar escenario de ciudad destruida con coberturas
+        run: blender --background --python scripts/blender/arena_ruined_city.py -- godot/assets/models/ruined_city_arena.glb
+
+      - name: Renderizar capturas PNG de vista previa (Cycles CPU)
+        run: blender --background --python scripts/blender/render_previews.py -- previews
+
+      # 4. Subir modelos GLB y capturas PNG para descargarlos directamente
+      - name: Subir artefacto de modelos GLB y vistas previas PNG
+        uses: actions/upload-artifact@v4
+        with:
+          name: blender-3d-assets-and-previews
+          path: |
+            godot/assets/models/*.glb
+            previews/*.png
+          if-no-files-found: error

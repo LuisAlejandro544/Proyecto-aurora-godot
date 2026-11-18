@@ -1,0 +1,5 @@
+[gd_scene format=3]
+
+; Escena base vacía para que Godot tenga una escena inicial válida al exportar el APK Debug.
+
+[node name="Main" type="Node2D"]

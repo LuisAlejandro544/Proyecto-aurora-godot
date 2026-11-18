@@ -1,0 +1,6 @@
+# Configuración de la versión exacta del compilador Rust y sus arquitecturas Android.
+# Usamos la última versión estable (1.100.0) e instalamos soporte para 64 bits (arm64) y 32 bits (armv7).
+[toolchain]
+channel = "1.100.0"
+targets = ["aarch64-linux-android", "armv7-linux-androideabi"]
+profile = "minimal"

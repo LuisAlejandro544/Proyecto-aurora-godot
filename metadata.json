@@ -1,0 +1,6 @@
+{
+  "name": "Iron Vector - Godot 4.7 + Rust Base",
+  "description": "Base de juego móvil de disparos con Godot 4.7.2 y Rust 1.100.0 (GDExtension) lista para compilar APK Debug en GitHub Actions, con Hello World en web.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
