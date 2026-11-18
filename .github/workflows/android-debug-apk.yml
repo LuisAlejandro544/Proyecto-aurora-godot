@@ -107,7 +107,9 @@ jobs:
 
       - name: Exportar ruta de Android NDK
         run: |
-          echo "ANDROID_NDK_HOME=${{ env.ANDROID_HOME }}/ndk/${{ env.ANDROID_NDK_VERSION }}" >> $GITHUB_ENV
+          NDK_DIR="${{ env.ANDROID_HOME }}/ndk/${{ env.ANDROID_NDK_VERSION }}"
+          echo "ANDROID_NDK_HOME=${NDK_DIR}" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=${NDK_DIR}" >> $GITHUB_ENV
 
       # 4. Rust 1.100.0 con targets ARM64 (64 bits) y ARMv7 (32 bits) + caché Cargo
       - name: Configurar Rust ${{ env.RUST_VERSION }}
@@ -141,7 +143,7 @@ jobs:
           cargo ndk \
             -t arm64-v8a \
             -t armeabi-v7a \
-            -p ${{ env.MIN_SDK_API }} \
+            --platform ${{ env.MIN_SDK_API }} \
             -o ../godot/bin \
             build
 
