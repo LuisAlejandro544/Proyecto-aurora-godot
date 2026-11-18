@@ -216,7 +216,7 @@ impl FragGrenade {
         let Some(instance) = exp_scene.instantiate() else {
             return;
         };
-        let Ok(mut exp_model) = instance.try_cast::<Node3D>() else {
+        let Ok(exp_model) = instance.try_cast::<Node3D>() else {
             return;
         };
 
@@ -306,6 +306,10 @@ impl FragGrenade {
 
 /// Busca recursivamente el `AnimationPlayer` generado al importar un modelo `.glb`.
 pub fn find_animation_player_recursive(node: &Gd<Node3D>) -> Option<Gd<AnimationPlayer>> {
+    find_anim_in_node(&node.clone().upcast::<Node>())
+}
+
+fn find_anim_in_node(node: &Gd<Node>) -> Option<Gd<AnimationPlayer>> {
     if let Ok(anim) = node.clone().try_cast::<AnimationPlayer>() {
         return Some(anim);
     }
@@ -315,13 +319,8 @@ pub fn find_animation_player_recursive(node: &Gd<Node3D>) -> Option<Gd<Animation
     let count = node.get_child_count();
     for i in 0..count {
         if let Some(child) = node.get_child(i) {
-            if let Ok(anim) = child.clone().try_cast::<AnimationPlayer>() {
-                return Some(anim);
-            }
-            if let Ok(child_3d) = child.try_cast::<Node3D>() {
-                if let Some(found) = find_animation_player_recursive(&child_3d) {
-                    return Some(found);
-                }
+            if let Some(found) = find_anim_in_node(&child) {
+                return Some(found);
             }
         }
     }

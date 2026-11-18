@@ -558,7 +558,7 @@ impl PlayerCapsule {
         let Some(instance) = grenade_scene.instantiate() else {
             return;
         };
-        let Ok(mut model_root) = instance.try_cast::<Node3D>() else {
+        let Ok(model_root) = instance.try_cast::<Node3D>() else {
             return;
         };
 
