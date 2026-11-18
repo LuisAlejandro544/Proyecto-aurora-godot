@@ -25,10 +25,46 @@ border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(1, 0.78, 0.35, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBtnPrimary_hover"]
+bg_color = Color(0.95, 0.56, 0.18, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.88, 0.48, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBtnSecondary_1"]
+bg_color = Color(0.14, 0.18, 0.25, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.42, 0.52, 0.64, 0.85)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBtnSecondary_hover"]
+bg_color = Color(0.20, 0.26, 0.36, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.32, 0.82, 1, 0.95)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 
 [node name="UI_EndOverlay" type="Control"]
 layout_mode = 3
@@ -113,6 +149,8 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 17
 theme_override_styles/normal = SubResource("StyleBtnPrimary_1")
+theme_override_styles/hover = SubResource("StyleBtnPrimary_hover")
+theme_override_styles/pressed = SubResource("StyleBtnPrimary_hover")
 text = "REANUDAR COMBATE"
 
 [node name="BtnOverlaySecondary" type="Button" parent="CenterBox/Card/VBox"]
@@ -120,6 +158,9 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("StyleBtnSecondary_1")
+theme_override_styles/hover = SubResource("StyleBtnSecondary_hover")
+theme_override_styles/pressed = SubResource("StyleBtnSecondary_hover")
 text = "CAMBIAR CÁMARA"
 
 [node name="BtnOverlayMenu" type="Button" parent="CenterBox/Card/VBox"]
@@ -127,4 +168,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("StyleBtnSecondary_1")
+theme_override_styles/hover = SubResource("StyleBtnSecondary_hover")
+theme_override_styles/pressed = SubResource("StyleBtnSecondary_hover")
 text = "VOLVER AL MENÚ"

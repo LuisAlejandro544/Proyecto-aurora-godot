@@ -49,6 +49,8 @@ pub struct PlayerCapsule {
     recoil_recover_pitch: f32,
     recoil_recover_yaw: f32,
     controls_enabled: bool,
+    was_on_floor: bool,
+    step_distance_accum: f32,
 
     collision_shape: Option<Gd<CollisionShape3D>>,
     visual_pivot: Option<Gd<Node3D>>,
@@ -65,6 +67,8 @@ impl ICharacterBody3D for PlayerCapsule {
     fn ready(&mut self) {
         self.health = self.max_health;
         self.controls_enabled = false;
+        self.was_on_floor = true;
+        self.step_distance_accum = 0.4;
 
         self.collision_shape = self.base().try_get_node_as::<CollisionShape3D>("CollisionShape3D");
         self.visual_pivot = self.base().try_get_node_as::<Node3D>("VisualPivot");
@@ -166,9 +170,38 @@ impl ICharacterBody3D for PlayerCapsule {
         let accel = if on_floor { 14.0 } else { 4.5 };
         vel.x += (target_vx - vel.x) * (dt * accel).min(1.0);
         vel.z += (target_vz - vel.z) * (dt * accel).min(1.0);
+        let pre_vel_y = vel.y;
 
         self.base_mut().set_velocity(vel);
         self.base_mut().move_and_slide();
+
+        // Detección de pasos al caminar/correr y aterrizaje para audio posicional.
+        let now_on_floor = self.base().is_on_floor();
+        if !self.was_on_floor && now_on_floor && pre_vel_y < -2.6 {
+            self.signals().landed().emit();
+        }
+        self.was_on_floor = now_on_floor;
+
+        let actual_vel = self.base().get_velocity();
+        let horiz_speed = Vector2::new(actual_vel.x, actual_vel.z).length();
+        if now_on_floor && self.controls_enabled && horiz_speed > 0.65 {
+            let sprinting_now = self.is_sprinting && combined_move.y < -0.55;
+            let stride = if self.is_crouching {
+                1.25
+            } else if sprinting_now {
+                1.48
+            } else {
+                1.68
+            };
+            self.step_distance_accum += horiz_speed * dt;
+            if self.step_distance_accum >= stride {
+                self.step_distance_accum = 0.0;
+                let crouching_now = self.is_crouching;
+                self.signals().footstep_triggered().emit(sprinting_now, crouching_now);
+            }
+        } else {
+            self.step_distance_accum = 0.45;
+        }
 
         // Recuperación suave del retroceso visual de cámara.
         if self.recoil_recover_pitch.abs() > 0.0001 {
@@ -183,10 +216,11 @@ impl ICharacterBody3D for PlayerCapsule {
         }
 
         self.apply_aim_transforms();
+        self.update_visual_visibility();
 
         // Disparo continuo si el botón táctil o tecla están presionados.
         if wants_fire && self.controls_enabled {
-            let speed_ratio = Vector2::new(vel.x, vel.z).length() / self.walk_speed.max(0.1);
+            let speed_ratio = horiz_speed / self.walk_speed.max(0.1);
             self.fire_weapon_step(speed_ratio);
         }
     }
@@ -205,6 +239,12 @@ impl PlayerCapsule {
 
     #[signal]
     fn took_damage(amount: f32, attacker_pos: Vector3);
+
+    #[signal]
+    fn footstep_triggered(is_sprinting: bool, is_crouching: bool);
+
+    #[signal]
+    fn landed();
 
     #[func]
     fn _on_weapon_hit_target(&mut self, damage: f32, _hit_pos: Vector3) {
@@ -290,12 +330,14 @@ impl PlayerCapsule {
         if let Some(mut arm) = self.spring_arm.clone() {
             arm.set_length(if fps { 0.0 } else { 2.35 });
             let pos = if fps {
-                Vector3::new(0.0, 0.08, -0.18)
+                Vector3::new(0.0, 0.08, -0.22)
             } else {
                 Vector3::new(0.54, 0.14, 0.0)
             };
             arm.set_position(pos);
         }
+        self.apply_stance_heights();
+        self.update_visual_visibility();
     }
 
     #[func]
@@ -308,7 +350,7 @@ impl PlayerCapsule {
         self.health
     }
 
-    /// Reinicia posición, vida, rotación inicial mirando al enemigo y munición al empezar la ronda.
+    /// Reinicia posición, vida, rotación inicial mirando al enemigo y munición al empezar o reaparecer.
     #[func]
     pub fn reset_for_round(&mut self, spawn_pos: Vector3, face_target: Vector3) {
         self.is_dead = false;
@@ -316,9 +358,19 @@ impl PlayerCapsule {
         self.is_crouching = false;
         self.crouch_blend = 0.0;
         self.is_firing = false;
+        self.is_sprinting = false;
         self.move_input = Vector2::ZERO;
         self.recoil_recover_pitch = 0.0;
         self.recoil_recover_yaw = 0.0;
+        self.was_on_floor = true;
+        self.step_distance_accum = 0.45;
+
+        if let Some(mut col) = self.collision_shape.clone() {
+            col.set_disabled(false);
+        }
+        if let Some(mut w_mount) = self.weapon_mount.clone() {
+            w_mount.set_visible(true);
+        }
 
         self.base_mut().set_global_position(spawn_pos);
         self.base_mut().set_velocity(Vector3::ZERO);
@@ -333,6 +385,7 @@ impl PlayerCapsule {
         self.pitch = -0.02;
         self.apply_stance_heights();
         self.apply_aim_transforms();
+        self.update_visual_visibility();
 
         if let Some(mut rig) = self.weapon_rig.clone() {
             rig.bind_mut().reset_ammo();
@@ -359,7 +412,33 @@ impl PlayerCapsule {
             self.is_dead = true;
             self.is_firing = false;
             self.controls_enabled = false;
+            if let Some(mut col) = self.collision_shape.clone() {
+                col.set_disabled(true);
+            }
+            if let Some(mut vis) = self.visual_pivot.clone() {
+                vis.set_visible(false);
+            }
+            if let Some(mut w_mount) = self.weapon_mount.clone() {
+                w_mount.set_visible(false);
+            }
             self.signals().died().emit();
+        }
+    }
+
+    /// Oculta la malla de cápsula en 1ª persona o si el brazo de cámara choca con un muro cercano,
+    /// evitando que la cápsula o el visor tapen la vista del jugador.
+    fn update_visual_visibility(&mut self) {
+        let mut show_capsule = !self.is_dead && !self.first_person_mode;
+        if show_capsule {
+            if let (Some(cam), Some(pivot)) = (self.camera.clone(), self.camera_pivot.clone()) {
+                let cam_dist = (cam.get_global_position() - pivot.get_global_position()).length();
+                if cam_dist < 0.88 {
+                    show_capsule = false;
+                }
+            }
+        }
+        if let Some(mut vis) = self.visual_pivot.clone() {
+            vis.set_visible(show_capsule);
         }
     }
 
@@ -383,9 +462,9 @@ impl PlayerCapsule {
             cam_piv.set_position(Vector3::new(0.0, cam_y, 0.0));
         }
         if let Some(mut w_mount) = self.weapon_mount.clone() {
-            let w_y = 1.24 - 0.42 * blend;
-            let w_x = if self.first_person_mode { 0.22 } else { 0.31 };
-            let w_z = if self.first_person_mode { -0.44 } else { -0.27 };
+            let w_y = (if self.first_person_mode { 1.32 } else { 1.24 }) - 0.42 * blend;
+            let w_x = if self.first_person_mode { 0.24 } else { 0.31 };
+            let w_z = if self.first_person_mode { -0.48 } else { -0.27 };
             w_mount.set_position(Vector3::new(w_x, w_y, w_z));
         }
     }

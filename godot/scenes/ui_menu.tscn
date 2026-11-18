@@ -41,22 +41,46 @@ border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(1, 0.78, 0.34, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleDeploy_btn_hover"]
+bg_color = Color(0.95, 0.54, 0.16, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.88, 0.48, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleChoice_btn"]
+bg_color = Color(0.13, 0.17, 0.23, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.42, 0.50, 0.62, 0.85)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="StyleBoxFlat" id="StyleChoice_btn"]
-bg_color = Color(0.14, 0.17, 0.22, 0.95)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.42, 0.48, 0.58, 0.8)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
+[sub_resource type="StyleBoxFlat" id="StyleChoice_btn_active"]
+bg_color = Color(0.20, 0.27, 0.36, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.96, 0.70, 0.26, 0.95)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 
 [node name="UI_Menu" type="Control"]
 layout_mode = 3
@@ -157,6 +181,8 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 15
 theme_override_styles/normal = SubResource("StyleChoice_btn")
+theme_override_styles/hover = SubResource("StyleChoice_btn_active")
+theme_override_styles/pressed = SubResource("StyleChoice_btn_active")
 text = "AJUSTES"
 
 [node name="BtnOpenControls" type="Button" parent="MainMargin/RootHBox/LeftColumn/ActionsRow"]
@@ -166,6 +192,8 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 15
 theme_override_styles/normal = SubResource("StyleChoice_btn")
+theme_override_styles/hover = SubResource("StyleChoice_btn_active")
+theme_override_styles/pressed = SubResource("StyleChoice_btn_active")
 text = "CONTROLES Y TÁCTICA"
 
 [node name="RightColumn" type="PanelContainer" parent="MainMargin/RootHBox"]
@@ -200,6 +228,8 @@ layout_mode = 2
 size_flags_horizontal = 3
 toggle_mode = true
 theme_override_styles/normal = SubResource("StyleChoice_btn")
+theme_override_styles/hover = SubResource("StyleChoice_btn_active")
+theme_override_styles/pressed = SubResource("StyleChoice_btn_active")
 text = "Recluta"
 
 [node name="BtnDiffTactical" type="Button" parent="MainMargin/RootHBox/RightColumn/SetupVBox/DiffRow"]
@@ -209,6 +239,8 @@ layout_mode = 2
 size_flags_horizontal = 3
 toggle_mode = true
 theme_override_styles/normal = SubResource("StyleChoice_btn")
+theme_override_styles/hover = SubResource("StyleChoice_btn_active")
+theme_override_styles/pressed = SubResource("StyleChoice_btn_active")
 text = "Táctico"
 
 [node name="BtnDiffVeteran" type="Button" parent="MainMargin/RootHBox/RightColumn/SetupVBox/DiffRow"]
@@ -218,6 +250,8 @@ layout_mode = 2
 size_flags_horizontal = 3
 toggle_mode = true
 theme_override_styles/normal = SubResource("StyleChoice_btn")
+theme_override_styles/hover = SubResource("StyleChoice_btn_active")
+theme_override_styles/pressed = SubResource("StyleChoice_btn_active")
 text = "Veterano"
 
 [node name="CamLabel" type="Label" parent="MainMargin/RootHBox/RightColumn/SetupVBox"]
@@ -236,6 +270,8 @@ layout_mode = 2
 size_flags_horizontal = 3
 toggle_mode = true
 theme_override_styles/normal = SubResource("StyleChoice_btn")
+theme_override_styles/hover = SubResource("StyleChoice_btn_active")
+theme_override_styles/pressed = SubResource("StyleChoice_btn_active")
 text = "3ª Persona (Ver Cápsula)"
 
 [node name="BtnCamFPS" type="Button" parent="MainMargin/RootHBox/RightColumn/SetupVBox/CamRow"]
@@ -245,6 +281,8 @@ layout_mode = 2
 size_flags_horizontal = 3
 toggle_mode = true
 theme_override_styles/normal = SubResource("StyleChoice_btn")
+theme_override_styles/hover = SubResource("StyleChoice_btn_active")
+theme_override_styles/pressed = SubResource("StyleChoice_btn_active")
 text = "1ª Persona"
 
 [node name="RoundsLabel" type="Label" parent="MainMargin/RootHBox/RightColumn/SetupVBox"]
@@ -263,6 +301,8 @@ layout_mode = 2
 size_flags_horizontal = 3
 toggle_mode = true
 theme_override_styles/normal = SubResource("StyleChoice_btn")
+theme_override_styles/hover = SubResource("StyleChoice_btn_active")
+theme_override_styles/pressed = SubResource("StyleChoice_btn_active")
 text = "Al mejor de 3"
 
 [node name="BtnRounds5" type="Button" parent="MainMargin/RootHBox/RightColumn/SetupVBox/RoundsRow"]
@@ -272,6 +312,8 @@ layout_mode = 2
 size_flags_horizontal = 3
 toggle_mode = true
 theme_override_styles/normal = SubResource("StyleChoice_btn")
+theme_override_styles/hover = SubResource("StyleChoice_btn_active")
+theme_override_styles/pressed = SubResource("StyleChoice_btn_active")
 text = "Al mejor de 5"
 
 [node name="Spacer" type="Control" parent="MainMargin/RootHBox/RightColumn/SetupVBox"]
@@ -284,6 +326,8 @@ custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleDeploy_btn")
+theme_override_styles/hover = SubResource("StyleDeploy_btn_hover")
+theme_override_styles/pressed = SubResource("StyleDeploy_btn_hover")
 text = "DESPLEGAR EN COMBATE"
 
 [node name="SettingsPopup" type="PanelContainer" parent="."]
@@ -295,23 +339,23 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -230.0
-offset_top = -150.0
-offset_right = 230.0
-offset_bottom = 150.0
+offset_left = -240.0
+offset_top = -180.0
+offset_right = 240.0
+offset_bottom = 180.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StylePopup_menu")
 
 [node name="VBox" type="VBoxContainer" parent="SettingsPopup"]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="SettingsPopup/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.66, 0.24, 1)
 theme_override_font_sizes/font_size = 20
-text = "AJUSTES DE APUNTADO"
+text = "AJUSTES DE COMBATE"
 
 [node name="SensRow" type="HBoxContainer" parent="SettingsPopup/VBox"]
 layout_mode = 2
@@ -334,6 +378,27 @@ max_value = 2.4
 step = 0.1
 value = 1.0
 
+[node name="SfxRow" type="HBoxContainer" parent="SettingsPopup/VBox"]
+layout_mode = 2
+
+[node name="SfxTitle" type="Label" parent="SettingsPopup/VBox/SfxRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Volumen de efectos (SFX)"
+
+[node name="SfxValueLabel" type="Label" parent="SettingsPopup/VBox/SfxRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "100%"
+
+[node name="SfxSlider" type="HSlider" parent="SettingsPopup/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 0.0
+max_value = 1.0
+step = 0.05
+value = 1.0
+
 [node name="InvertYCheck" type="CheckButton" parent="SettingsPopup/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -343,6 +408,9 @@ text = "Invertir eje vertical (Y)"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
+theme_override_styles/normal = SubResource("StyleDeploy_btn")
+theme_override_styles/hover = SubResource("StyleDeploy_btn_hover")
+theme_override_styles/pressed = SubResource("StyleDeploy_btn_hover")
 text = "GUARDAR Y CERRAR"
 
 [node name="ControlsPopup" type="PanelContainer" parent="."]
@@ -354,10 +422,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -270.0
-offset_top = -180.0
-offset_right = 270.0
-offset_bottom = 180.0
+offset_left = -280.0
+offset_top = -185.0
+offset_right = 280.0
+offset_bottom = 185.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StylePopup_menu")
@@ -375,11 +443,14 @@ text = "CONTROLES MÓVILES Y CONSEJOS"
 [node name="Body" type="Label" parent="ControlsPopup/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
-text = "• Joystick izquierdo: mover la cápsula. Empujar al borde superior activa carrera (sprint).\n• Mitad derecha de pantalla: desliza el dedo para girar la cámara y apuntar con precisión.\n• Botón AGACHAR: reduce tu silueta detrás de barreras Jersey y sacos de arena y mejora la precisión del AK-7.62.\n• Botón DISPARAR / RECARGAR / SALTAR / CAM: acciones táctiles directas.\n• Respaldo PC: WASD + Ratón, C (Agachar), R (Recargar), Espacio (Saltar)."
+text = "• Joystick izquierdo: mover la cápsula. Empujar al anillo superior activa carrera (sprint).\n• Mitad derecha / Botón DISPARAR: puedes deslizar el mismo dedo sobre DISPARAR para seguir apuntando mientras disparas.\n• Botón AGACHAR: reduce tu silueta detrás de barreras Jersey y sacos de arena y mejora la precisión del rifle 7.62.\n• Reaparición automática: tras caer en combate, reapareces automáticamente en pocos segundos hasta completar la meta.\n• Respaldo PC: WASD + Ratón, C (Agachar), R (Recargar), Espacio (Saltar)."
 autowrap_mode = 2
 
 [node name="BtnCloseControls" type="Button" parent="ControlsPopup/VBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
+theme_override_styles/normal = SubResource("StyleChoice_btn")
+theme_override_styles/hover = SubResource("StyleChoice_btn_active")
+theme_override_styles/pressed = SubResource("StyleChoice_btn_active")
 text = "ENTENDIDO"

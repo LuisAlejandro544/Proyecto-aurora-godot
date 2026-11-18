@@ -23,10 +23,10 @@ Hoja de ruta evolutiva desde la base tecnológica hasta un shooter táctico móv
 - [x] Controlador `EnemyAiCapsule` con `NavigationAgent3D`, verificación real de línea de tiro en coberturas, ráfagas humanas y flanqueo.
 - [x] Pantallas separadas: Menú Principal (con popups de Ajustes y Controles), Carga Asíncrona por corrutinas, HUD Táctico y Pausa/Resultados.
 
-## Fase 4 — Audio, Feedback e Impacto (Próxima)
-- [ ] Integración de efectos de sonido procedurales/Ogg: disparos 7.62, sonido metálico de casquillos, recarga, impactos en concreto y cuerpo.
+## Fase 4 — Audio, Feedback e Impacto (En progreso)
+- [x] Integración de efectos de sonido CC0 Ogg: disparos 7.62, caída metálica de casquillos, recarga, pasos sobre concreto y aterrizaje (2D + 3D espacial).
+- [x] Indicador direccional de daño en el HUD cuando la IA dispara desde un flanco y reaparición automática tras caer.
 - [ ] Partículas de impacto de bala (chispas en metal/vehículos y polvo en hormigón/sacos de arena).
-- [ ] Indicador direccional de daño en el HUD cuando la IA dispara desde un flanco.
 
 ## Fase 5 — Personajes y Variedad Táctica (Futura)
 - [ ] Reemplazo de la malla cápsula por personajes bípedos estilizados en Blender con esqueleto (`Rig`) y animaciones de correr, apuntar y agacharse.

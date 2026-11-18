@@ -88,6 +88,8 @@ pub struct EnemyAiCapsule {
     under_fire_alert: bool,
     current_cover_target: Vector3,
     has_cover_target: bool,
+    was_on_floor: bool,
+    step_distance_accum: f32,
 
     cover_points: Vec<Vector3>,
     player_node: Option<Gd<Node3D>>,
@@ -104,6 +106,8 @@ impl ICharacterBody3D for EnemyAiCapsule {
         self.health = self.max_health;
         self.state = AiTacticalState::PatrolAdvance;
         self.strafe_sign = 1.0;
+        self.was_on_floor = true;
+        self.step_distance_accum = 0.4;
 
         self.nav_agent = self.base().try_get_node_as::<NavigationAgent3D>("NavigationAgent3D");
         self.collision_shape = self.base().try_get_node_as::<CollisionShape3D>("CollisionShape3D");
@@ -183,6 +187,12 @@ impl EnemyAiCapsule {
     #[signal]
     fn state_changed(state_name: GString);
 
+    #[signal]
+    fn footstep_triggered(is_sprinting: bool, is_crouching: bool);
+
+    #[signal]
+    fn landed();
+
     #[func]
     pub fn set_ai_active(&mut self, active: bool) {
         self.ai_active = active;
@@ -237,6 +247,18 @@ impl EnemyAiCapsule {
         self.bursts_fired_exposed = 0;
         self.last_known_player_pos = face_target;
         self.last_player_sample = face_target;
+        self.was_on_floor = true;
+        self.step_distance_accum = 0.4;
+
+        if let Some(mut col) = self.collision_shape.clone() {
+            col.set_disabled(false);
+        }
+        if let Some(mut vis) = self.visual_pivot.clone() {
+            vis.set_visible(true);
+        }
+        if let Some(mut w_mount) = self.weapon_mount.clone() {
+            w_mount.set_visible(true);
+        }
 
         self.base_mut().set_global_position(spawn_pos);
         self.base_mut().set_velocity(Vector3::ZERO);
@@ -279,6 +301,15 @@ impl EnemyAiCapsule {
         if self.health <= 0.0 {
             self.is_dead = true;
             self.ai_active = false;
+            if let Some(mut col) = self.collision_shape.clone() {
+                col.set_disabled(true);
+            }
+            if let Some(mut vis) = self.visual_pivot.clone() {
+                vis.set_visible(false);
+            }
+            if let Some(mut w_mount) = self.weapon_mount.clone() {
+                w_mount.set_visible(false);
+            }
             self.signals().died().emit();
             return;
         }
@@ -532,8 +563,36 @@ impl EnemyAiCapsule {
 
         vel.x += (desired_vel.x - vel.x) * (dt * 9.5).min(1.0);
         vel.z += (desired_vel.z - vel.z) * (dt * 9.5).min(1.0);
+        let pre_vel_y = vel.y;
         self.base_mut().set_velocity(vel);
         self.base_mut().move_and_slide();
+
+        let now_on_floor = self.base().is_on_floor();
+        if !self.was_on_floor && now_on_floor && pre_vel_y < -2.6 {
+            self.signals().landed().emit();
+        }
+        self.was_on_floor = now_on_floor;
+
+        let actual_vel = self.base().get_velocity();
+        let horiz_speed = Vector2::new(actual_vel.x, actual_vel.z).length();
+        if now_on_floor && horiz_speed > 0.65 {
+            let sprinting_now = self.state == AiTacticalState::SeekCover;
+            let stride = if self.is_crouching {
+                1.25
+            } else if sprinting_now {
+                1.48
+            } else {
+                1.68
+            };
+            self.step_distance_accum += horiz_speed * dt;
+            if self.step_distance_accum >= stride {
+                self.step_distance_accum = 0.0;
+                let crouching_now = self.is_crouching;
+                self.signals().footstep_triggered().emit(sprinting_now, crouching_now);
+            }
+        } else {
+            self.step_distance_accum = 0.4;
+        }
 
         // Orientación suave hacia el jugador o hacia la dirección de carrera al huir a cobertura.
         let look_target = if has_los || self.state == AiTacticalState::EngageBurst {

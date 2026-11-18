@@ -1,64 +1,198 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://scripts/touch_hud.gd" id="1_hud"]
 
 [sub_resource type="StyleBoxFlat" id="StyleHudCard_1"]
-bg_color = Color(0.07, 0.09, 0.12, 0.82)
+bg_color = Color(0.06, 0.08, 0.12, 0.86)
+border_width_left = 3
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.24, 0.68, 0.94, 0.85)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+content_margin_left = 12.0
+content_margin_top = 7.0
+content_margin_right = 12.0
+content_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxFlat" id="StyleScoreCard_1"]
+bg_color = Color(0.06, 0.08, 0.12, 0.90)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.30, 0.38, 0.48, 0.85)
+border_color = Color(0.88, 0.60, 0.18, 0.90)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 18.0
+content_margin_top = 6.0
+content_margin_right = 18.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="StyleEnemyCard_1"]
+bg_color = Color(0.06, 0.08, 0.12, 0.86)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 3
+border_width_bottom = 1
+border_color = Color(0.94, 0.34, 0.22, 0.85)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+content_margin_left = 12.0
+content_margin_top = 7.0
+content_margin_right = 12.0
+content_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxFlat" id="StyleWeaponCard_1"]
+bg_color = Color(0.06, 0.08, 0.12, 0.88)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 3
+border_width_bottom = 1
+border_color = Color(0.95, 0.66, 0.22, 0.88)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="StyleHpBg_1"]
+bg_color = Color(0.11, 0.14, 0.19, 0.95)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
-content_margin_left = 12.0
-content_margin_top = 8.0
-content_margin_right = 12.0
-content_margin_bottom = 8.0
 
 [sub_resource type="StyleBoxFlat" id="StyleHpPlayer_1"]
-bg_color = Color(0.16, 0.72, 0.96, 1)
+bg_color = Color(0.18, 0.76, 0.98, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleHpEnemy_1"]
-bg_color = Color(0.96, 0.32, 0.22, 1)
+bg_color = Color(0.96, 0.30, 0.20, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleReloadFill_1"]
+bg_color = Color(0.96, 0.70, 0.22, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
 
 [sub_resource type="StyleBoxFlat" id="StyleJoyBase_1"]
-bg_color = Color(0.08, 0.11, 0.15, 0.48)
+bg_color = Color(0.06, 0.09, 0.13, 0.52)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.45, 0.62, 0.78, 0.72)
-corner_radius_top_left = 80
-corner_radius_top_right = 80
-corner_radius_bottom_right = 80
-corner_radius_bottom_left = 80
+border_color = Color(0.38, 0.64, 0.84, 0.78)
+corner_radius_top_left = 82
+corner_radius_top_right = 82
+corner_radius_bottom_right = 82
+corner_radius_bottom_left = 82
+
+[sub_resource type="StyleBoxFlat" id="StyleSprintRing_1"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 1
+border_width_top = 2
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.95, 0.68, 0.22, 0.38)
+corner_radius_top_left = 92
+corner_radius_top_right = 92
+corner_radius_bottom_right = 92
+corner_radius_bottom_left = 92
 
 [sub_resource type="StyleBoxFlat" id="StyleJoyKnob_1"]
-bg_color = Color(0.28, 0.76, 0.98, 0.82)
+bg_color = Color(0.24, 0.76, 0.98, 0.88)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.92, 0.97, 1, 0.95)
+border_color = Color(0.94, 0.98, 1, 0.95)
 corner_radius_top_left = 34
 corner_radius_top_right = 34
 corner_radius_bottom_right = 34
 corner_radius_bottom_left = 34
 
-[sub_resource type="StyleBoxFlat" id="StyleFireBtn_1"]
-bg_color = Color(0.86, 0.26, 0.14, 0.88)
+[sub_resource type="StyleBoxFlat" id="StyleTacBtn_normal"]
+bg_color = Color(0.09, 0.12, 0.17, 0.86)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(1, 0.72, 0.34, 0.95)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
+border_color = Color(0.38, 0.49, 0.62, 0.85)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleTacBtn_pressed"]
+bg_color = Color(0.18, 0.25, 0.34, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.32, 0.82, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleFireBtn_normal"]
+bg_color = Color(0.84, 0.24, 0.12, 0.90)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.76, 0.36, 0.96)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleFireBtn_pressed"]
+bg_color = Color(0.98, 0.36, 0.16, 0.98)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 0.92, 0.56, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleRespawnBanner_1"]
+bg_color = Color(0.05, 0.07, 0.11, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.96, 0.64, 0.20, 0.95)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 24.0
+content_margin_top = 14.0
+content_margin_right = 24.0
+content_margin_bottom = 14.0
 
 [node name="UI_HUD" type="Control"]
 layout_mode = 3
@@ -79,26 +213,88 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.85, 0.08, 0.06, 0.45)
+color = Color(0.88, 0.08, 0.06, 0.42)
+
+[node name="DmgTop" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -160.0
+offset_top = 0.0
+offset_right = 160.0
+offset_bottom = 14.0
+grow_horizontal = 2
+mouse_filter = 2
+color = Color(1, 0.22, 0.14, 0.92)
+
+[node name="DmgBottom" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -160.0
+offset_top = -14.0
+offset_right = 160.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+color = Color(1, 0.22, 0.14, 0.92)
+
+[node name="DmgLeft" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 0.0
+offset_top = -110.0
+offset_right = 14.0
+offset_bottom = 110.0
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 0.22, 0.14, 0.92)
+
+[node name="DmgRight" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -14.0
+offset_top = -110.0
+offset_right = 0.0
+offset_bottom = 110.0
+grow_horizontal = 0
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 0.22, 0.14, 0.92)
 
 [node name="TopMargin" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 86.0
+offset_bottom = 84.0
 grow_horizontal = 2
 mouse_filter = 2
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 18
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 16
 
 [node name="TopRow" type="HBoxContainer" parent="TopMargin"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 12
 
 [node name="PlayerCard" type="PanelContainer" parent="TopMargin/TopRow"]
-custom_minimum_size = Vector2(260, 0)
+custom_minimum_size = Vector2(246, 0)
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleHudCard_1")
@@ -113,8 +309,9 @@ layout_mode = 2
 [node name="Name" type="Label" parent="TopMargin/TopRow/PlayerCard/VBox/HeaderRow"]
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.88, 0.93, 0.98, 1)
 theme_override_font_sizes/font_size = 13
-text = "JUGADOR (CÁPSULA)"
+text = "OPERADOR"
 
 [node name="StanceLabel" type="Label" parent="TopMargin/TopRow/PlayerCard/VBox/HeaderRow"]
 unique_name_in_owner = true
@@ -125,8 +322,9 @@ text = "DE PIE"
 
 [node name="PlayerHpBar" type="ProgressBar" parent="TopMargin/TopRow/PlayerCard/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 14)
+custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
+theme_override_styles/background = SubResource("StyleHpBg_1")
 theme_override_styles/fill = SubResource("StyleHpPlayer_1")
 value = 100.0
 show_percentage = false
@@ -134,18 +332,24 @@ show_percentage = false
 [node name="PlayerHpLabel" type="Label" parent="TopMargin/TopRow/PlayerCard/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 13
-text = "100 / 100"
+theme_override_colors/font_color = Color(0.76, 0.85, 0.95, 1)
+theme_override_font_sizes/font_size = 12
+text = "100 / 100 HP"
 
-[node name="ScoreCard" type="PanelContainer" parent="TopMargin/TopRow"]
+[node name="LeftSpacer" type="Control" parent="TopMargin/TopRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleHudCard_1")
+
+[node name="ScoreCard" type="PanelContainer" parent="TopMargin/TopRow"]
+custom_minimum_size = Vector2(216, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleScoreCard_1")
 
 [node name="VBox" type="VBoxContainer" parent="TopMargin/TopRow/ScoreCard"]
 layout_mode = 2
-theme_override_constants/separation = 2
+theme_override_constants/separation = 1
 
 [node name="ScoreLabel" type="Label" parent="TopMargin/TopRow/ScoreCard/VBox"]
 unique_name_in_owner = true
@@ -157,49 +361,117 @@ horizontal_alignment = 1
 [node name="RoundLabel" type="Label" parent="TopMargin/TopRow/ScoreCard/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.72, 0.28, 1)
+theme_override_colors/font_color = Color(0.96, 0.72, 0.28, 1)
 theme_override_font_sizes/font_size = 12
-text = "RONDA 1 (META 2)"
+text = "RONDA 1 • META 2"
 horizontal_alignment = 1
 
+[node name="RightSpacer" type="Control" parent="TopMargin/TopRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
 [node name="EnemyCard" type="PanelContainer" parent="TopMargin/TopRow"]
-custom_minimum_size = Vector2(250, 0)
+custom_minimum_size = Vector2(236, 0)
 layout_mode = 2
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleHudCard_1")
+theme_override_styles/panel = SubResource("StyleEnemyCard_1")
 
 [node name="VBox" type="VBoxContainer" parent="TopMargin/TopRow/EnemyCard"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="EnemyStateLabel" type="Label" parent="TopMargin/TopRow/EnemyCard/VBox"]
+[node name="HeaderRow" type="HBoxContainer" parent="TopMargin/TopRow/EnemyCard/VBox"]
+layout_mode = 2
+
+[node name="EnemyName" type="Label" parent="TopMargin/TopRow/EnemyCard/VBox/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.95, 0.86, 0.84, 1)
+theme_override_font_sizes/font_size = 13
+text = "RIVAL IA"
+
+[node name="EnemyStateLabel" type="Label" parent="TopMargin/TopRow/EnemyCard/VBox/HeaderRow"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.56, 0.36, 1)
-theme_override_font_sizes/font_size = 13
-text = "IA: Avanzando"
+theme_override_colors/font_color = Color(1, 0.62, 0.36, 1)
+theme_override_font_sizes/font_size = 11
+text = "ACTIVO"
 
 [node name="EnemyHpBar" type="ProgressBar" parent="TopMargin/TopRow/EnemyCard/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 14)
+custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
+theme_override_styles/background = SubResource("StyleHpBg_1")
 theme_override_styles/fill = SubResource("StyleHpEnemy_1")
 value = 100.0
 show_percentage = false
 
+[node name="EnemyHpLabel" type="Label" parent="TopMargin/TopRow/EnemyCard/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.76, 0.72, 1)
+theme_override_font_sizes/font_size = 12
+text = "100 / 100 HP"
+horizontal_alignment = 2
+
 [node name="BtnCamera" type="Button" parent="TopMargin/TopRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(68, 54)
+custom_minimum_size = Vector2(78, 54)
 layout_mode = 2
 theme_override_font_sizes/font_size = 13
-text = "CAM"
+theme_override_styles/normal = SubResource("StyleTacBtn_normal")
+theme_override_styles/hover = SubResource("StyleTacBtn_pressed")
+theme_override_styles/pressed = SubResource("StyleTacBtn_pressed")
+text = "CAM 3P"
 
 [node name="BtnPause" type="Button" parent="TopMargin/TopRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(68, 54)
+custom_minimum_size = Vector2(76, 54)
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleTacBtn_normal")
+theme_override_styles/hover = SubResource("StyleTacBtn_pressed")
+theme_override_styles/pressed = SubResource("StyleTacBtn_pressed")
 text = "PAUSA"
+
+[node name="RespawnBanner" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -126.0
+offset_right = 210.0
+offset_bottom = -52.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleRespawnBanner_1")
+
+[node name="VBox" type="VBoxContainer" parent="RespawnBanner"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="RespawnTitle" type="Label" parent="RespawnBanner/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.74, 0.30, 1)
+theme_override_font_sizes/font_size = 18
+text = "HAS CAÍDO"
+horizontal_alignment = 1
+
+[node name="RespawnSubtitle" type="Label" parent="RespawnBanner/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.92, 0.96, 1)
+theme_override_font_sizes/font_size = 14
+text = "Reapareciendo en 2s..."
+horizontal_alignment = 1
 
 [node name="CrosshairRoot" type="Control" parent="."]
 unique_name_in_owner = true
@@ -230,7 +502,7 @@ offset_top = -20.0
 offset_right = 1.5
 offset_bottom = -9.0
 mouse_filter = 2
-color = Color(0.95, 0.98, 1, 0.9)
+color = Color(0.95, 0.98, 1, 0.92)
 
 [node name="TickBottom" type="ColorRect" parent="CrosshairRoot"]
 unique_name_in_owner = true
@@ -240,7 +512,7 @@ offset_top = 9.0
 offset_right = 1.5
 offset_bottom = 20.0
 mouse_filter = 2
-color = Color(0.95, 0.98, 1, 0.9)
+color = Color(0.95, 0.98, 1, 0.92)
 
 [node name="TickLeft" type="ColorRect" parent="CrosshairRoot"]
 unique_name_in_owner = true
@@ -250,7 +522,7 @@ offset_top = -1.5
 offset_right = -9.0
 offset_bottom = 1.5
 mouse_filter = 2
-color = Color(0.95, 0.98, 1, 0.9)
+color = Color(0.95, 0.98, 1, 0.92)
 
 [node name="TickRight" type="ColorRect" parent="CrosshairRoot"]
 unique_name_in_owner = true
@@ -260,7 +532,7 @@ offset_top = -1.5
 offset_right = 20.0
 offset_bottom = 1.5
 mouse_filter = 2
-color = Color(0.95, 0.98, 1, 0.9)
+color = Color(0.95, 0.98, 1, 0.92)
 
 [node name="Hitmarker" type="Control" parent="CrosshairRoot"]
 unique_name_in_owner = true
@@ -269,23 +541,23 @@ layout_mode = 0
 
 [node name="Line1" type="ColorRect" parent="CrosshairRoot/Hitmarker"]
 layout_mode = 0
-offset_left = -10.0
+offset_left = -11.0
 offset_top = -1.5
-offset_right = 10.0
+offset_right = 11.0
 offset_bottom = 1.5
 rotation = 0.785398
-pivot_offset = Vector2(10, 1.5)
+pivot_offset = Vector2(11, 1.5)
 mouse_filter = 2
 color = Color(1, 0.36, 0.16, 1)
 
 [node name="Line2" type="ColorRect" parent="CrosshairRoot/Hitmarker"]
 layout_mode = 0
-offset_left = -10.0
+offset_left = -11.0
 offset_top = -1.5
-offset_right = 10.0
+offset_right = 11.0
 offset_bottom = 1.5
 rotation = -0.785398
-pivot_offset = Vector2(10, 1.5)
+pivot_offset = Vector2(11, 1.5)
 mouse_filter = 2
 color = Color(1, 0.36, 0.16, 1)
 
@@ -298,13 +570,15 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -80.0
+offset_left = -82.0
 offset_top = 42.0
-offset_right = 80.0
-offset_bottom = 56.0
+offset_right = 82.0
+offset_bottom = 54.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+theme_override_styles/background = SubResource("StyleHpBg_1")
+theme_override_styles/fill = SubResource("StyleReloadFill_1")
 max_value = 1.0
 show_percentage = false
 
@@ -314,12 +588,44 @@ layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 22.0
-offset_top = -230.0
-offset_right = 252.0
-offset_bottom = -18.0
+offset_left = 20.0
+offset_top = -236.0
+offset_right = 258.0
+offset_bottom = -16.0
 grow_vertical = 0
 mouse_filter = 2
+
+[node name="SprintRing" type="Panel" parent="JoystickArea"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -92.0
+offset_top = -92.0
+offset_right = 92.0
+offset_bottom = 92.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleSprintRing_1")
+
+[node name="SprintLabel" type="Label" parent="JoystickArea/SprintRing"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -36.0
+offset_top = -16.0
+offset_right = 36.0
+offset_bottom = 2.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.95, 0.72, 0.28, 0.75)
+theme_override_font_sizes/font_size = 10
+text = "▲ SPRINT"
+horizontal_alignment = 1
 
 [node name="JoystickBase" type="Panel" parent="JoystickArea"]
 unique_name_in_owner = true
@@ -329,10 +635,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -78.0
-offset_top = -78.0
-offset_right = 78.0
-offset_bottom = 78.0
+offset_left = -80.0
+offset_top = -80.0
+offset_right = 80.0
+offset_bottom = 80.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -341,10 +647,10 @@ theme_override_styles/panel = SubResource("StyleJoyBase_1")
 [node name="JoystickKnob" type="Panel" parent="JoystickArea/JoystickBase"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 44.0
-offset_top = 44.0
-offset_right = 112.0
-offset_bottom = 112.0
+offset_left = 46.0
+offset_top = 46.0
+offset_right = 114.0
+offset_bottom = 114.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleJoyKnob_1")
 
@@ -355,10 +661,10 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -360.0
-offset_top = -280.0
-offset_right = -18.0
-offset_bottom = -18.0
+offset_left = -378.0
+offset_top = -296.0
+offset_right = -16.0
+offset_bottom = -16.0
 grow_horizontal = 0
 grow_vertical = 0
 mouse_filter = 2
@@ -368,23 +674,34 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -196.0
-offset_top = 4.0
+offset_left = -212.0
+offset_top = 0.0
 offset_right = 0.0
-offset_bottom = 66.0
+offset_bottom = 72.0
 grow_horizontal = 0
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleHudCard_1")
+theme_override_styles/panel = SubResource("StyleWeaponCard_1")
 
 [node name="VBox" type="VBoxContainer" parent="RightControls/WeaponCard"]
 layout_mode = 2
-theme_override_constants/separation = 2
+theme_override_constants/separation = 1
 
-[node name="WeaponName" type="Label" parent="RightControls/WeaponCard/VBox"]
+[node name="TopWeaponRow" type="HBoxContainer" parent="RightControls/WeaponCard/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.70, 0.28, 1)
+
+[node name="ReloadStatusLabel" type="Label" parent="RightControls/WeaponCard/VBox/TopWeaponRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.96, 0.72, 0.24, 1)
+theme_override_font_sizes/font_size = 11
+text = "LISTO"
+
+[node name="WeaponName" type="Label" parent="RightControls/WeaponCard/VBox/TopWeaponRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.72, 0.30, 1)
 theme_override_font_sizes/font_size = 12
-text = "RIFLE CLÁSICO 7.62"
+text = "RIFLE 7.62"
 horizontal_alignment = 2
 
 [node name="AmmoLabel" type="Label" parent="RightControls/WeaponCard/VBox"]
@@ -402,14 +719,17 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -126.0
-offset_top = -170.0
+offset_left = -138.0
+offset_top = -182.0
 offset_right = 0.0
-offset_bottom = -52.0
+offset_bottom = -46.0
 grow_horizontal = 0
 grow_vertical = 0
+mouse_filter = 2
 theme_override_font_sizes/font_size = 18
-theme_override_styles/normal = SubResource("StyleFireBtn_1")
+theme_override_styles/normal = SubResource("StyleFireBtn_normal")
+theme_override_styles/hover = SubResource("StyleFireBtn_pressed")
+theme_override_styles/pressed = SubResource("StyleFireBtn_pressed")
 text = "DISPARAR"
 
 [node name="BtnReload" type="Button" parent="RightControls"]
@@ -420,13 +740,16 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -246.0
-offset_top = -170.0
-offset_right = -138.0
-offset_bottom = -112.0
+offset_left = -262.0
+offset_top = -182.0
+offset_right = -152.0
+offset_bottom = -120.0
 grow_horizontal = 0
 grow_vertical = 0
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleTacBtn_normal")
+theme_override_styles/hover = SubResource("StyleTacBtn_pressed")
+theme_override_styles/pressed = SubResource("StyleTacBtn_pressed")
 text = "RECARGAR"
 
 [node name="BtnCrouch" type="Button" parent="RightControls"]
@@ -437,13 +760,16 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -246.0
-offset_top = -102.0
-offset_right = -138.0
-offset_bottom = -44.0
+offset_left = -262.0
+offset_top = -108.0
+offset_right = -152.0
+offset_bottom = -46.0
 grow_horizontal = 0
 grow_vertical = 0
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleTacBtn_normal")
+theme_override_styles/hover = SubResource("StyleTacBtn_pressed")
+theme_override_styles/pressed = SubResource("StyleTacBtn_pressed")
 text = "AGACHAR"
 
 [node name="BtnJump" type="Button" parent="RightControls"]
@@ -454,11 +780,14 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -346.0
-offset_top = -102.0
-offset_right = -258.0
-offset_bottom = -44.0
+offset_left = -368.0
+offset_top = -108.0
+offset_right = -274.0
+offset_bottom = -46.0
 grow_horizontal = 0
 grow_vertical = 0
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("StyleTacBtn_normal")
+theme_override_styles/hover = SubResource("StyleTacBtn_pressed")
+theme_override_styles/pressed = SubResource("StyleTacBtn_pressed")
 text = "SALTAR"

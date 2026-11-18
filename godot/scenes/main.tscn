@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_gm"]
 [ext_resource type="Script" path="res://scripts/asset_loader.gd" id="2_loader"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui_menu.tscn" id="6_menu"]
 [ext_resource type="PackedScene" path="res://scenes/ui_hud.tscn" id="7_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui_end_overlay.tscn" id="8_end"]
+[ext_resource type="Script" path="res://scripts/combat_audio.gd" id="9_audio"]
 
 [sub_resource type="StyleBoxFlat" id="StyleLoading_1"]
 bg_color = Color(0.06, 0.08, 0.11, 0.95)
@@ -30,6 +31,9 @@ script = ExtResource("1_gm")
 
 [node name="AssetLoader" type="Node" parent="."]
 script = ExtResource("2_loader")
+
+[node name="CombatAudio" type="Node" parent="."]
+script = ExtResource("9_audio")
 
 [node name="MenuCameraPivot" type="Node3D" parent="."]
 

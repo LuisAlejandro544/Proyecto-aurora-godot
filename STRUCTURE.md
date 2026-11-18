@@ -26,8 +26,10 @@ Organización modular de carpetas y propósito de cada archivo en el repositorio
 ├── godot/
 │   ├── project.godot             # Configuración Godot 4.7 Mobile + mapa de entrada
 │   ├── shooter_core.gdextension  # Mapeo de libshooter_core.so (arm64, armv7 y linux host CI)
-│   ├── export_presets.cfg        # Preset Android Debug APK (minSdk 24, targetSdk 35, 32+64 bits)
-│   ├── assets/models/            # (Ignorado en Git) Carpeta poblada desde GitHub Releases en CI
+│   ├── export_presets.cfg        # Presets Android Debug separados (64 bits arm64-v8a y 32 bits armeabi-v7a)
+│   ├── assets/
+│   │   ├── models/               # (Ignorado en Git) Carpeta poblada desde GitHub Releases en CI
+│   │   └── audio/                # Efectos de sonido CC0 (.ogg): disparos, recarga, casquillo, pasos y salto
 │   ├── scenes/
 │   │   ├── main.tscn             # Escena raíz que une cámaras, arena, personajes y pantallas UI
 │   │   ├── arena.tscn            # NavigationRegion3D + iluminación + FxContainer
@@ -35,15 +37,16 @@ Organización modular de carpetas y propósito de cada archivo en el repositorio
 │   │   ├── enemy_ai_capsule.tscn # Nodo EnemyAiCapsule + NavigationAgent3D + WeaponRig
 │   │   ├── ui_menu.tscn          # Menú principal + popups de Ajustes y Controles
 │   │   ├── ui_hud.tscn           # HUD táctico de combate + joystick/botones multitáctiles
-│   │   └── ui_end_overlay.tscn   # Pantallas de Pausa y Fin de Ronda/Partida
+│   │   └── ui_end_overlay.tscn   # Pantallas de Pausa y Fin de Partida
 │   └── scripts/
-│       ├── game_manager.gd       # Orquestador del flujo menú -> carga -> rondas -> resultado
+│       ├── game_manager.gd       # Orquestador del flujo menú -> carga -> combate/reaparición -> resultado
 │       ├── asset_loader.gd       # Carga asíncrona por corrutinas de los 5 .glb
+│       ├── combat_audio.gd       # Audio de combate 2D y espacial 3D (disparos, pasos, recarga, casquillo)
 │       ├── arena_controller.gd   # Instancia la ciudad, hornea NavMesh y extrae coberturas
 │       ├── capsule_visual_builder.gd # Crea cápsulas 3D, visor, manos y acopla el rifle + FX
 │       ├── menu_screen.gd        # Lógica del menú principal y popups
-│       ├── touch_hud.gd          # Control multitáctil, mira dinámica, hitmarker y marcador
-│       └── end_overlay.gd        # Lógica de pausa y resumen de ronda/victoria
+│       ├── touch_hud.gd          # Control multitáctil (girar cámara disparando), mira y marcador
+│       └── end_overlay.gd        # Lógica de pausa y resumen de victoria/derrota
 ├── src/                          # App web mínima "Hello World" (Vite + React + TypeScript)
 ├── README.md
 ├── ROADMAP.md

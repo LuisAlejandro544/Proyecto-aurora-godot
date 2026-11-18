@@ -9,6 +9,7 @@ extends Control
 
 signal deploy_requested(difficulty: int, first_person: bool, rounds_to_win: int)
 signal settings_changed(sensitivity: float, invert_y: bool)
+signal sfx_volume_changed(volume_ratio: float)
 
 @onready var btn_diff_recruit: Button = %BtnDiffRecruit
 @onready var btn_diff_tactical: Button = %BtnDiffTactical
@@ -28,6 +29,8 @@ signal settings_changed(sensitivity: float, invert_y: bool)
 @onready var controls_popup: PanelContainer = %ControlsPopup
 @onready var sens_slider: HSlider = %SensSlider
 @onready var sens_value_label: Label = %SensValueLabel
+@onready var sfx_slider: HSlider = %SfxSlider
+@onready var sfx_value_label: Label = %SfxValueLabel
 @onready var invert_y_check: CheckButton = %InvertYCheck
 @onready var btn_close_settings: Button = %BtnCloseSettings
 @onready var btn_close_controls: Button = %BtnCloseControls
@@ -36,6 +39,7 @@ var selected_difficulty: int = 1
 var selected_fps: bool = false
 var selected_rounds_to_win: int = 2
 var aim_sensitivity: float = 1.0
+var sfx_volume: float = 1.0
 var invert_y: bool = false
 
 
@@ -68,10 +72,12 @@ func _ready() -> void:
 	btn_close_controls.pressed.connect(func(): controls_popup.visible = false)
 
 	sens_slider.value_changed.connect(_on_sens_changed)
+	sfx_slider.value_changed.connect(_on_sfx_changed)
 	invert_y_check.toggled.connect(_on_invert_y_toggled)
 
 	_refresh_selection_visuals()
 	_on_sens_changed(sens_slider.value)
+	_on_sfx_changed(sfx_slider.value)
 
 
 func _set_difficulty(level: int) -> void:
@@ -93,6 +99,12 @@ func _on_sens_changed(val: float) -> void:
 	aim_sensitivity = val
 	sens_value_label.text = "%.1fx" % val
 	settings_changed.emit(aim_sensitivity, invert_y)
+
+
+func _on_sfx_changed(val: float) -> void:
+	sfx_volume = val
+	sfx_value_label.text = "%d%%" % roundi(val * 100.0)
+	sfx_volume_changed.emit(sfx_volume)
 
 
 func _on_invert_y_toggled(enabled: bool) -> void:

@@ -3,13 +3,14 @@
 ## Coordina el ciclo completo entre pantallas separadas:
 ## 1. Menú Principal (cámara orbital 3D sobre la ciudad destruida una vez cargada).
 ## 2. Pantalla de Carga asíncrona (descarga de escena/modelos GLB + NavMesh en segundo plano).
-## 3. Combate Activo por Rondas (Jugador cápsula vs IA local inteligente con AK-47).
+## 3. Combate Activo por Rondas con reaparición automática al caer hasta completar la meta.
 ## 4. Pausa y Pantalla de Victoria/Derrota.
 
 class_name GameManager
 extends Node
 
 @onready var asset_loader: AssetLoader = $AssetLoader
+@onready var combat_audio: CombatAudio = $CombatAudio
 @onready var arena: ArenaController = $Arena
 @onready var player: Node3D = $PlayerCapsule
 @onready var enemy_ai: Node3D = $EnemyAiCapsule
@@ -26,6 +27,7 @@ extends Node
 var _assets_ready: bool = false
 var _in_match: bool = false
 var _is_paused: bool = false
+var _is_respawning: bool = false
 var _first_person: bool = false
 var _difficulty: int = 1
 var _rounds_to_win: int = 2
@@ -35,6 +37,7 @@ var _ai_score: int = 0
 var _round_hits: int = 0
 var _total_hits: int = 0
 var _sensitivity_mult: float = 1.0
+var _match_session_id: int = 0
 
 
 func _ready() -> void:
@@ -58,12 +61,12 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if not _in_match and menu_camera.current:
+	if not _in_match and not _is_respawning and menu_camera.current:
 		menu_camera_pivot.rotate_y(delta * 0.14)
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel") and _in_match and not ui_end_overlay.visible:
+	if event.is_action_pressed("ui_cancel") and (_in_match or _is_respawning) and not ui_end_overlay.visible:
 		_open_pause()
 
 
@@ -94,6 +97,7 @@ func _bootstrap_assets_and_world() -> bool:
 		enemy_ai.call("register_cover_point", pt)
 
 	_connect_weapon_hud_signals()
+	combat_audio.attach_to_combatants(player, enemy_ai)
 	_assets_ready = true
 	loading_bar.value = 100.0
 	return true
@@ -105,6 +109,9 @@ func _connect_ui_signals() -> void:
 		_sensitivity_mult = sens
 		ui_hud.invert_y = inv_y
 		player.call("set_aim_sensitivity", 0.0032 * sens)
+	)
+	ui_menu.sfx_volume_changed.connect(func(vol: float):
+		combat_audio.set_sfx_volume(vol)
 	)
 
 	ui_hud.move_input_changed.connect(func(vec: Vector2): player.call("set_move_input", vec))
@@ -139,8 +146,8 @@ func _connect_combat_signals() -> void:
 		_total_hits += 1
 		ui_hud.notify_hit_confirmed()
 	)
-	player.connect("took_damage", func(_amt: float, _pos: Vector3):
-		ui_hud.notify_took_damage()
+	player.connect("took_damage", func(_amt: float, attacker_pos: Vector3):
+		ui_hud.notify_took_damage(attacker_pos, player.global_transform)
 	)
 	player.connect("died", _on_player_died)
 
@@ -166,6 +173,7 @@ func _connect_weapon_hud_signals() -> void:
 func _on_deploy_requested(difficulty: int, first_person: bool, rounds_to_win: int) -> void:
 	if not _assets_ready:
 		return
+	_match_session_id += 1
 	_difficulty = difficulty
 	_first_person = first_person
 	_rounds_to_win = rounds_to_win
@@ -173,9 +181,11 @@ func _on_deploy_requested(difficulty: int, first_person: bool, rounds_to_win: in
 	_ai_score = 0
 	_current_round = 1
 	_total_hits = 0
+	_is_respawning = false
 
 	enemy_ai.call("set_difficulty", _difficulty)
 	player.call("set_camera_mode_first_person", _first_person)
+	ui_hud.set_camera_mode_label(_first_person)
 
 	ui_menu.visible = false
 	ui_end_overlay.visible = false
@@ -186,6 +196,7 @@ func _on_deploy_requested(difficulty: int, first_person: bool, rounds_to_win: in
 func _start_round() -> void:
 	_in_match = true
 	_is_paused = false
+	_is_respawning = false
 	_round_hits = 0
 	arena.clear_dynamic_fx()
 
@@ -196,12 +207,15 @@ func _start_round() -> void:
 	var ai_spawn := arena.spawn_ai_pos
 	player.call("reset_for_round", p_spawn, ai_spawn)
 	enemy_ai.call("reset_for_round", ai_spawn, p_spawn)
+	player.call("set_camera_mode_first_person", _first_person)
 
 	var p_cam := player.get_node_or_null("CameraPivot/SpringArm3D/Camera3D") as Camera3D
 	if p_cam != null:
 		p_cam.current = true
 
 	ui_hud.reset_hud_for_round(_player_score, _ai_score, _current_round, _rounds_to_win)
+	ui_hud.set_camera_mode_label(_first_person)
+	ui_hud.show_respawn_banner("RONDA %d" % _current_round, "¡EN COMBATE!", Color(0.28, 0.86, 0.98), 0.95)
 	player.call("set_controls_enabled", true)
 	enemy_ai.call("set_ai_active", true)
 
@@ -226,17 +240,47 @@ func _on_enemy_died() -> void:
 
 
 func _finish_round(player_won: bool) -> void:
+	var session_id := _match_session_id
 	player.call("set_controls_enabled", false)
 	enemy_ai.call("set_ai_active", false)
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-
-	await get_tree().create_timer(0.85).timeout
-	ui_hud.visible = false
+	ui_hud.update_scoreboard(_player_score, _ai_score, _current_round, _rounds_to_win)
 
 	if _player_score >= _rounds_to_win or _ai_score >= _rounds_to_win:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		await get_tree().create_timer(0.9).timeout
+		if session_id != _match_session_id:
+			return
+		ui_hud.hide_respawn_banner()
+		ui_hud.visible = false
 		ui_end_overlay.show_match_result(_player_score > _ai_score, _player_score, _ai_score, _total_hits)
-	else:
-		ui_end_overlay.show_round_result(player_won, _player_score, _ai_score, _round_hits)
+		return
+
+	# Reaparición automática sin interrumpir el flujo con pantallas modales entre rondas.
+	_is_respawning = true
+	var title_txt := "OBJETIVO ABATIDO" if player_won else "HAS CAÍDO"
+	var accent := Color(0.32, 0.92, 0.62) if player_won else Color(1.0, 0.36, 0.28)
+	var action_txt := "Siguiente ronda" if player_won else "Reapareciendo"
+
+	for secs_left in [2, 1]:
+		if session_id != _match_session_id:
+			return
+		while _is_paused:
+			await get_tree().process_frame
+			if session_id != _match_session_id:
+				return
+		ui_hud.show_respawn_banner(title_txt, "%s en %ds..." % [action_txt, secs_left], accent)
+		await get_tree().create_timer(1.0).timeout
+
+	if session_id != _match_session_id:
+		return
+	while _is_paused:
+		await get_tree().process_frame
+		if session_id != _match_session_id:
+			return
+
+	_current_round += 1
+	ui_hud.hide_respawn_banner()
+	_start_round()
 
 
 func _start_next_round() -> void:
@@ -257,8 +301,9 @@ func _open_pause() -> void:
 func _resume_from_pause() -> void:
 	_is_paused = false
 	ui_end_overlay.visible = false
-	player.call("set_controls_enabled", true)
-	enemy_ai.call("set_ai_active", true)
+	if not _is_respawning:
+		player.call("set_controls_enabled", true)
+		enemy_ai.call("set_ai_active", true)
 	if not DisplayServer.is_touchscreen_available():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -266,11 +311,14 @@ func _resume_from_pause() -> void:
 func _toggle_camera_perspective() -> void:
 	_first_person = not _first_person
 	player.call("set_camera_mode_first_person", _first_person)
+	ui_hud.set_camera_mode_label(_first_person)
 
 
 func _return_to_menu() -> void:
+	_match_session_id += 1
 	_in_match = false
 	_is_paused = false
+	_is_respawning = false
 	player.call("set_controls_enabled", false)
 	enemy_ai.call("set_ai_active", false)
 	player.visible = false
@@ -279,6 +327,7 @@ func _return_to_menu() -> void:
 
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	menu_camera.current = true
+	ui_hud.hide_respawn_banner()
 	ui_end_overlay.visible = false
 	ui_hud.visible = false
 	ui_menu.visible = true

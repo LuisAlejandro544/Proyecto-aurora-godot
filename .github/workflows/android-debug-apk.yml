@@ -29,7 +29,8 @@ jobs:
       ANDROID_BUILD_TOOLS_VERSION: "35.0.1"
       ANDROID_PLATFORM_VERSION: "android-35"
       MIN_SDK_API: "24"
-      APK_OUTPUT: "build/android/iron_vector-debug.apk"
+      APK_ARM64_OUTPUT: "build/android/iron_vector-arm64-v8a-debug.apk"
+      APK_ARMV7_OUTPUT: "build/android/iron_vector-armeabi-v7a-debug.apk"
 
     steps:
       - name: Descargar código del repositorio
@@ -203,17 +204,26 @@ jobs:
             'export/android/debug_keystore_pass = "android"' \
             > ~/.config/godot/editor_settings-4.7.tres
 
-      # 8. Importar proyecto (registra .gdextension y .glb) y exportar APK Debug
-      - name: Importar recursos y exportar APK Debug con Godot
+      # 8. Importar proyecto (registra .gdextension, .glb y .ogg) y exportar 2 APKs separados (64 y 32 bits)
+      - name: Importar recursos y exportar APKs Debug separados (arm64-v8a y armeabi-v7a)
         run: |
           mkdir -p godot/build/android
           godot --headless --path godot --import
-          godot --headless --verbose --path godot --export-debug "Android" "$GITHUB_WORKSPACE/godot/${{ env.APK_OUTPUT }}"
+          godot --headless --verbose --path godot --export-debug "Android_arm64" "$GITHUB_WORKSPACE/godot/${{ env.APK_ARM64_OUTPUT }}"
+          godot --headless --verbose --path godot --export-debug "Android_armv7" "$GITHUB_WORKSPACE/godot/${{ env.APK_ARMV7_OUTPUT }}"
+          ls -lh godot/build/android
 
-      # 9. Subir el APK Debug compilado como artefacto descargable
-      - name: Subir APK Debug generado
+      # 9. Subir ambos APKs Debug como artefactos separados (.zip independientes)
+      - name: Subir APK Debug 64 bits (arm64-v8a)
         uses: actions/upload-artifact@v4
         with:
-          name: iron-vector-android-debug-apk
-          path: godot/${{ env.APK_OUTPUT }}
+          name: iron-vector-android-debug-arm64-v8a
+          path: godot/${{ env.APK_ARM64_OUTPUT }}
+          if-no-files-found: error
+
+      - name: Subir APK Debug 32 bits (armeabi-v7a)
+        uses: actions/upload-artifact@v4
+        with:
+          name: iron-vector-android-debug-armeabi-v7a
+          path: godot/${{ env.APK_ARMV7_OUTPUT }}
           if-no-files-found: error

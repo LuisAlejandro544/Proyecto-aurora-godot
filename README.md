@@ -27,15 +27,15 @@ Este repositorio **no almacena binarios `.glb` ni `.apk`** en el historial de Gi
    - `release_title` (opcional) y `prerelease` (opcional).
 4. Blender 5.2.4 generará los 5 `.glb` y 4 capturas `.png` de inspección y creará el **GitHub Release** con ese Tag.
 
-### Paso 2: Compilar el APK Debug para Android
+### Paso 2: Compilar los APK Debug para Android (64 y 32 bits separados)
 1. En la pestaña **Actions**, selecciona **`Build Android Debug APK`**.
 2. Pulsa **Run workflow** (opcionalmente indica `assets_tag` o déjalo vacío para descargar el último Release publicado).
 3. El flujo:
    - Descarga los `.glb` directamente desde GitHub Releases a `godot/assets/models/`.
    - Ejecuta `cargo test --lib` en Rust.
    - Compila `libshooter_core.so` en modo Debug para **64 bits (`arm64-v8a`)** y **32 bits (`armeabi-v7a`)** con `cargo-ndk` + librería host Linux para el importador de Godot.
-   - Importa el proyecto con **Godot 4.7.2-stable** y exporta `iron_vector-debug.apk`.
-4. Descarga el artefacto **`iron-vector-android-debug-apk`** e instala el APK en tu teléfono Android (distribución directa / Uptodown).
+   - Importa el proyecto con **Godot 4.7.2-stable** y exporta dos APK separados: `iron_vector-arm64-v8a-debug.apk` y `iron_vector-armeabi-v7a-debug.apk`.
+4. Descarga el artefacto correspondiente a tu teléfono (**`iron-vector-android-debug-arm64-v8a`** para 64 bits o **`iron-vector-android-debug-armeabi-v7a`** para 32 bits) e instala el APK en tu Android.
 
 ---
 
