@@ -14,4 +14,5 @@ crate-type = ["cdylib"]
 
 [dependencies]
 # Bindings oficiales de godot-rust (gdext) apuntando a la API exacta de Godot 4.7.
-godot = { version = "0.5.5", features = ["api-4-7"] }
+# Se incluye experimental-godot-api para exponer NavigationAgent3D en godot::classes.
+godot = { version = "0.5.5", features = ["api-4-7", "experimental-godot-api"] }

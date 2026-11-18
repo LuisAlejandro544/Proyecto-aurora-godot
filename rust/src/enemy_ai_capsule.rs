@@ -18,8 +18,9 @@ use crate::combat_math::{
 use crate::weapon_rig::WeaponRig;
 
 /// Estados tácticos de la máquina de estados finitos de la IA.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
 enum AiTacticalState {
+    #[default]
     PatrolAdvance,
     EngageBurst,
     SeekCover,
@@ -296,7 +297,8 @@ impl EnemyAiCapsule {
         if self.state != next {
             self.state = next;
             self.state_timer = 0.0;
-            self.signals().state_changed().emit(GString::from(next.label()));
+            let label = GString::from(next.label());
+            self.signals().state_changed().emit(&label);
         }
     }
 
@@ -754,7 +756,8 @@ impl EnemyAiCapsule {
     }
 
     fn apply_aim_transforms(&mut self) {
-        self.base_mut().set_rotation(Vector3::new(0.0, self.yaw, 0.0));
+        let yaw = self.yaw;
+        self.base_mut().set_rotation(Vector3::new(0.0, yaw, 0.0));
         if let Some(mut w_mount) = self.weapon_mount.clone() {
             w_mount.set_rotation(Vector3::new(self.aim_pitch, 0.0, 0.0));
         }

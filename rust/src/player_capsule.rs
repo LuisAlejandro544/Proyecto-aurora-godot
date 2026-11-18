@@ -391,7 +391,8 @@ impl PlayerCapsule {
     }
 
     fn apply_aim_transforms(&mut self) {
-        self.base_mut().set_rotation(Vector3::new(0.0, self.yaw, 0.0));
+        let yaw = self.yaw;
+        self.base_mut().set_rotation(Vector3::new(0.0, yaw, 0.0));
         if let Some(mut cam_piv) = self.camera_pivot.clone() {
             cam_piv.set_rotation(Vector3::new(self.pitch, 0.0, 0.0));
         }
