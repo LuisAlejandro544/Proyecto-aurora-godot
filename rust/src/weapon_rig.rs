@@ -1,9 +1,9 @@
 //! Lógica del rifle de asalto 7.62 (`WeaponRig`) y entidades físicas/visuales de proyectil y casquillo.
 //!
 //! Gestiona munición (30/120), cadencia de disparo (~570 RPM), retroceso acumulativo,
-//! animaciones del modelo GLB (`idle`, `fire`, `reload`), fogonazo (`flash_burst`),
-//! trazadoras de bala en vuelo (`TracerProjectile`), expulsión de casquillos (`EjectedCasing`)
-//! y detección de impactos por raycast 3D de doble etapa (mira -> cañón).
+//! modo de apuntado ADS con recarga en mira (`aim_idle`, `aim_reload`), animaciones del
+//! modelo GLB (`idle`, `fire`, `reload`), fogonazo (`flash_burst`), trazadoras de bala en vuelo
+//! (`TracerProjectile`), expulsión de casquillos (`EjectedCasing`) y raycast 3D de doble etapa.
 
 use godot::classes::{
     AnimationPlayer, CollisionObject3D, INode3D, Node3D, PackedScene, PhysicsRayQueryParameters3D,
@@ -97,11 +97,11 @@ impl EjectedCasing {
 }
 
 /// Reproduce una animación buscando coincidencia exacta o por sufijo en el `AnimationPlayer`.
-fn play_matching_animation(anim: &mut Gd<AnimationPlayer>, target: &str) {
+fn play_matching_animation(anim: &mut Gd<AnimationPlayer>, target: &str) -> bool {
     if anim.has_animation(target) {
         anim.stop();
         anim.play_ex().name(target).done();
-        return;
+        return true;
     }
     let list = anim.get_animation_list();
     for idx in 0..list.len() {
@@ -109,8 +109,16 @@ fn play_matching_animation(anim: &mut Gd<AnimationPlayer>, target: &str) {
         if candidate.ends_with(target) {
             anim.stop();
             anim.play_ex().name(&candidate).done();
-            return;
+            return true;
         }
+    }
+    false
+}
+
+/// Intenta reproducir una animación preferida (ej. `aim_reload`) con respaldo seguro (ej. `reload`).
+fn play_animation_with_fallback(anim: &mut Gd<AnimationPlayer>, preferred: &str, fallback: &str) {
+    if !play_matching_animation(anim, preferred) && preferred != fallback {
+        play_matching_animation(anim, fallback);
     }
 }
 
@@ -136,11 +144,13 @@ pub struct WeaponRig {
     fire_cooldown: f64,
     reload_timer: f64,
     is_reloading: bool,
+    is_aiming: bool,
     flash_timer: f64,
     recoil_heat: f32,
     pending_recoil_pitch: f32,
     pending_recoil_yaw: f32,
     shot_counter: u32,
+    last_hit_damage: Option<f32>,
 
     anim_player: Option<Gd<AnimationPlayer>>,
     muzzle_point: Option<Gd<Node3D>>,
@@ -185,7 +195,8 @@ impl INode3D for WeaponRig {
             }
         } else if let Some(mut anim) = self.anim_player.clone() {
             if !anim.is_playing() {
-                play_matching_animation(&mut anim, "idle");
+                let idle_name = if self.is_aiming { "aim_idle" } else { "idle" };
+                play_animation_with_fallback(&mut anim, idle_name, "idle");
             }
         }
     }
@@ -233,7 +244,8 @@ impl WeaponRig {
             flash.set_visible(false);
         }
         if let Some(mut anim) = self.anim_player.clone() {
-            play_matching_animation(&mut anim, "idle");
+            let idle_name = if self.is_aiming { "aim_idle" } else { "idle" };
+            play_animation_with_fallback(&mut anim, idle_name, "idle");
         }
     }
 
@@ -266,22 +278,52 @@ impl WeaponRig {
         self.base_damage = dmg.max(1.0);
     }
 
+    /// Activa o desactiva la postura de apuntado por mira (ADS), adaptando incluso recargas en curso.
+    #[func]
+    pub fn set_aiming(&mut self, aiming: bool) {
+        if self.is_aiming == aiming {
+            return;
+        }
+        self.is_aiming = aiming;
+        let Some(mut anim) = self.anim_player.clone() else {
+            return;
+        };
+
+        if self.is_reloading {
+            // Cambia suavemente entre `reload` y `aim_reload` conservando el tiempo transcurrido.
+            let elapsed = (self.reload_duration - self.reload_timer).max(0.0);
+            let target = if aiming { "aim_reload" } else { "reload" };
+            play_animation_with_fallback(&mut anim, target, "reload");
+            anim.call("seek", &[elapsed.to_variant(), true.to_variant()]);
+        } else {
+            let idle_name = if aiming { "aim_idle" } else { "idle" };
+            play_animation_with_fallback(&mut anim, idle_name, "idle");
+        }
+    }
+
+    #[func]
+    pub fn is_weapon_aiming(&self) -> bool {
+        self.is_aiming
+    }
+
     /// Restablece la munición y detiene recargas al comenzar una nueva ronda.
     #[func]
     pub fn reset_ammo(&mut self) {
         self.ammo_in_mag = self.mag_capacity;
         self.reserve_ammo = 120;
         self.is_reloading = false;
+        self.is_aiming = false;
         self.reload_timer = 0.0;
         self.fire_cooldown = 0.0;
         self.recoil_heat = 0.0;
         self.pending_recoil_pitch = 0.0;
         self.pending_recoil_yaw = 0.0;
+        self.last_hit_damage = None;
         if let Some(mut flash) = self.muzzle_flash_node.clone() {
             flash.set_visible(false);
         }
         if let Some(mut anim) = self.anim_player.clone() {
-            play_matching_animation(&mut anim, "idle");
+            play_animation_with_fallback(&mut anim, "idle", "idle");
         }
         let in_mag = self.ammo_in_mag;
         let reserve = self.reserve_ammo;
@@ -324,7 +366,13 @@ impl WeaponRig {
         out
     }
 
+    /// Consume el daño del último impacto confirmado sin re-entrar por señal en el dueño.
+    pub fn consume_last_hit_damage(&mut self) -> Option<f32> {
+        self.last_hit_damage.take()
+    }
+
     /// Inicia una recarga si el cargador no está lleno y queda munición de reserva.
+    /// Permite recargar tanto desde cadera (`reload`) como apuntando (`aim_reload`).
     #[func]
     pub fn try_reload(&mut self) -> bool {
         if self.is_reloading || self.ammo_in_mag >= self.mag_capacity || self.reserve_ammo <= 0 {
@@ -333,7 +381,8 @@ impl WeaponRig {
         self.is_reloading = true;
         self.reload_timer = self.reload_duration;
         if let Some(mut anim) = self.anim_player.clone() {
-            play_matching_animation(&mut anim, "reload");
+            let anim_name = if self.is_aiming { "aim_reload" } else { "reload" };
+            play_animation_with_fallback(&mut anim, anim_name, "reload");
         }
         let duration = self.reload_duration;
         self.signals().reload_started().emit(duration);
@@ -349,7 +398,8 @@ impl WeaponRig {
         self.reserve_ammo -= transferred;
 
         if let Some(mut anim) = self.anim_player.clone() {
-            play_matching_animation(&mut anim, "idle");
+            let idle_name = if self.is_aiming { "aim_idle" } else { "idle" };
+            play_animation_with_fallback(&mut anim, idle_name, "idle");
         }
         let in_mag = self.ammo_in_mag;
         let reserve = self.reserve_ammo;
@@ -372,12 +422,14 @@ impl WeaponRig {
         self.ammo_in_mag -= 1;
         self.fire_cooldown = self.fire_interval;
         self.shot_counter = self.shot_counter.wrapping_add(1);
+        self.last_hit_damage = None;
         self.recoil_heat = (self.recoil_heat + 0.16).min(1.0);
 
-        // Retroceso físico ascendente + leve deriva lateral alternante.
+        // Retroceso físico ascendente + leve deriva lateral alternante (más controlado en ADS).
+        let ads_recoil_scale = if self.is_aiming { 0.68 } else { 1.0 };
         let side_sign = if self.shot_counter % 2 == 0 { 1.0 } else { -1.0 };
-        self.pending_recoil_pitch += 0.022 + self.recoil_heat * 0.012;
-        self.pending_recoil_yaw += side_sign * (0.005 + self.recoil_heat * 0.006);
+        self.pending_recoil_pitch += (0.022 + self.recoil_heat * 0.012) * ads_recoil_scale;
+        self.pending_recoil_yaw += side_sign * (0.005 + self.recoil_heat * 0.006) * ads_recoil_scale;
 
         // Animación del rifle y fogonazo.
         if let Some(mut anim) = self.anim_player.clone() {
@@ -561,6 +613,7 @@ impl WeaponRig {
                             "apply_bullet_damage",
                             &[dmg.to_variant(), muzzle_pos.to_variant()],
                         );
+                        self.last_hit_damage = Some(dmg);
                         self.signals().hit_target().emit(dmg, final_hit_pos);
                     }
                 }

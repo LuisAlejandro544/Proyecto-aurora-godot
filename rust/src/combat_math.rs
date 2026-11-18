@@ -1,4 +1,4 @@
-//! Lógica matemática pura de combate, dispersión balística y evaluación táctica de coberturas.
+//! Lógica matemática pura de combate, dispersión balística, movilidad avanzada y evaluación táctica.
 //!
 //! Este módulo NO depende de nodos de Godot para mantenerse 100% modular, determinista
 //! y fácil de verificar con pruebas unitarias (`cargo test`) sin necesidad de motor gráfico.
@@ -32,6 +32,63 @@ pub fn calculate_effective_spread_deg(
     let stance_factor = if is_crouching { 0.62 } else { 1.0 };
     let recoil_penalty = recoil_heat.clamp(0.0, 1.0) * 2.1;
     ((base_spread_deg + move_penalty) * stance_factor + recoil_penalty).clamp(0.25, 8.5)
+}
+
+/// Calcula la dispersión angular táctica incluyendo apuntado con mira (ADS).
+/// Al apuntar con mira (`is_aiming == true`), el cono de dispersión se cierra drásticamente.
+pub fn calculate_tactical_spread_deg(
+    base_spread_deg: f32,
+    move_speed_ratio: f32,
+    is_crouching: bool,
+    is_aiming: bool,
+    recoil_heat: f32,
+) -> f32 {
+    let raw = calculate_effective_spread_deg(
+        base_spread_deg,
+        move_speed_ratio,
+        is_crouching,
+        recoil_heat,
+    );
+    if is_aiming {
+        (raw * 0.36).clamp(0.14, 3.6)
+    } else {
+        raw
+    }
+}
+
+/// Calcula la velocidad horizontal de deslizamiento táctico con desaceleración suave (`ease-out`).
+pub fn compute_slide_speed(
+    elapsed_s: f32,
+    duration_s: f32,
+    initial_speed: f32,
+    end_speed: f32,
+) -> f32 {
+    if duration_s <= 0.001 {
+        return end_speed.max(0.0);
+    }
+    let t = (elapsed_s / duration_s).clamp(0.0, 1.0);
+    // Desaceleración cuadrática suave para conservar impulso inicial explosivo tipo Warzone.
+    let eased = 1.0 - (1.0 - t) * (1.0 - t);
+    initial_speed + (end_speed - initial_speed) * eased
+}
+
+/// Calcula el daño radial de una granada de fragmentación según distancia al epicentro.
+/// Dentro de `1.6 m` inflige daño letal completo; fuera de `blast_radius_m` no causa daño.
+pub fn calculate_grenade_damage(max_damage: f32, distance_m: f32, blast_radius_m: f32) -> f32 {
+    if max_damage <= 0.0 || blast_radius_m <= 0.01 {
+        return 0.0;
+    }
+    let d = distance_m.max(0.0);
+    if d >= blast_radius_m {
+        return 0.0;
+    }
+    let inner_lethal = 1.6_f32.min(blast_radius_m * 0.35);
+    if d <= inner_lethal {
+        return max_damage;
+    }
+    let norm = ((d - inner_lethal) / (blast_radius_m - inner_lethal)).clamp(0.0, 1.0);
+    let falloff = (1.0 - norm).powf(1.45);
+    (max_damage * falloff).max(0.0)
 }
 
 /// Genera un desvío angular determinista `(yaw_rad, pitch_rad)` dentro de un cono circular
@@ -147,10 +204,30 @@ mod tests {
     }
 
     #[test]
-    fn crouching_reduces_weapon_spread() {
-        let standing = calculate_effective_spread_deg(1.2, 0.5, false, 0.3);
-        let crouching = calculate_effective_spread_deg(1.2, 0.5, true, 0.3);
+    fn crouching_and_ads_reduce_weapon_spread() {
+        let standing = calculate_tactical_spread_deg(1.2, 0.5, false, false, 0.3);
+        let crouching = calculate_tactical_spread_deg(1.2, 0.5, true, false, 0.3);
+        let ads = calculate_tactical_spread_deg(1.2, 0.5, false, true, 0.3);
         assert!(crouching < standing);
+        assert!(ads < crouching);
+    }
+
+    #[test]
+    fn slide_speed_decelerates_from_initial_to_end() {
+        let start = compute_slide_speed(0.0, 0.62, 9.8, 3.6);
+        let mid = compute_slide_speed(0.31, 0.62, 9.8, 3.6);
+        let end = compute_slide_speed(0.62, 0.62, 9.8, 3.6);
+        assert!((start - 9.8).abs() < 1e-4);
+        assert!(mid < start && mid > end);
+        assert!((end - 3.6).abs() < 1e-4);
+    }
+
+    #[test]
+    fn grenade_damage_respects_epicenter_and_blast_radius() {
+        assert!((calculate_grenade_damage(95.0, 0.8, 6.5) - 95.0).abs() < 1e-4);
+        let mid = calculate_grenade_damage(95.0, 4.0, 6.5);
+        assert!(mid > 10.0 && mid < 95.0);
+        assert_eq!(calculate_grenade_damage(95.0, 6.6, 6.5), 0.0);
     }
 
     #[test]

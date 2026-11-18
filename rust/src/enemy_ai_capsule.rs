@@ -2,19 +2,20 @@
 //!
 //! La cápsula enemiga utiliza `NavigationAgent3D`, evaluación real de línea de visión
 //! con raycasts 3D contra las coberturas de la ciudad destruida, tiempo de reacción humano,
-//! giro angular suave, ráfagas controladas de AK-47, agachado tras barreras al recargar
-//! o recibir fuego, y flanqueo si el jugador permanece escondido demasiado tiempo.
+//! giro angular suave, ráfagas controladas con apuntado ADS, agachado tras barreras al recargar
+//! o recibir fuego, lanzamiento táctico de granadas cuando el jugador acampa oculto y flanqueo.
 
 use godot::classes::{
     CapsuleShape3D, CharacterBody3D, CollisionObject3D, CollisionShape3D, ICharacterBody3D,
-    NavigationAgent3D, Node3D, PhysicsRayQueryParameters3D,
+    NavigationAgent3D, Node3D, PackedScene, PhysicsRayQueryParameters3D,
 };
 use godot::prelude::*;
 
 use crate::combat_math::{
-    calculate_effective_spread_deg, compute_smooth_yaw_step, score_cover_candidate,
+    calculate_tactical_spread_deg, compute_smooth_yaw_step, score_cover_candidate,
     select_burst_length, should_flank,
 };
+use crate::grenade::{find_animation_player_recursive, FragGrenade};
 use crate::weapon_rig::WeaponRig;
 
 /// Estados tácticos de la máquina de estados finitos de la IA.
@@ -40,7 +41,7 @@ impl AiTacticalState {
     }
 }
 
-/// Controlador de la cápsula enemiga inteligente equipada con el rifle clásico 7.62.
+/// Controlador de la cápsula enemiga inteligente equipada con el rifle clásico 7.62 y granada.
 #[derive(GodotClass)]
 #[class(init, base=CharacterBody3D)]
 pub struct EnemyAiCapsule {
@@ -80,6 +81,13 @@ pub struct EnemyAiCapsule {
     strafe_timer: f64,
     decision_seed: u32,
 
+    #[init(val = 1)]
+    grenades_left: i32,
+    grenade_cooldown: f32,
+    grenade_scene: Option<Gd<PackedScene>>,
+    explosion_scene: Option<Gd<PackedScene>>,
+    fx_container: Option<Gd<Node3D>>,
+
     seconds_without_los: f32,
     player_stationary_secs: f32,
     last_player_sample: Vector3,
@@ -103,6 +111,7 @@ pub struct EnemyAiCapsule {
 #[godot_api]
 impl ICharacterBody3D for EnemyAiCapsule {
     fn ready(&mut self) {
+        self.base_mut().add_to_group("combatants");
         self.health = self.max_health;
         self.state = AiTacticalState::PatrolAdvance;
         self.strafe_sign = 1.0;
@@ -126,6 +135,10 @@ impl ICharacterBody3D for EnemyAiCapsule {
         let dt = delta as f32;
         if self.is_dead || !self.ai_active {
             return;
+        }
+
+        if self.grenade_cooldown > 0.0 {
+            self.grenade_cooldown = (self.grenade_cooldown - dt).max(0.0);
         }
 
         let target_crouch = if self.is_crouching { 1.0 } else { 0.0 };
@@ -193,6 +206,21 @@ impl EnemyAiCapsule {
     #[signal]
     fn landed();
 
+    #[signal]
+    fn grenade_thrown();
+
+    #[func]
+    pub fn set_grenade_scenes(
+        &mut self,
+        grenade_scene: Option<Gd<PackedScene>>,
+        explosion_scene: Option<Gd<PackedScene>>,
+        fx_container: Option<Gd<Node3D>>,
+    ) {
+        self.grenade_scene = grenade_scene;
+        self.explosion_scene = explosion_scene;
+        self.fx_container = fx_container;
+    }
+
     #[func]
     pub fn set_ai_active(&mut self, active: bool) {
         self.ai_active = active;
@@ -245,6 +273,8 @@ impl EnemyAiCapsule {
         self.burst_shots_left = 0;
         self.burst_pause_timer = 0.0;
         self.bursts_fired_exposed = 0;
+        self.grenades_left = if self.difficulty_level >= 1 { 1 } else { 0 };
+        self.grenade_cooldown = 3.0;
         self.last_known_player_pos = face_target;
         self.last_player_sample = face_target;
         self.was_on_floor = true;
@@ -328,6 +358,9 @@ impl EnemyAiCapsule {
         if self.state != next {
             self.state = next;
             self.state_timer = 0.0;
+            if let Some(mut rig) = self.weapon_rig.clone() {
+                rig.bind_mut().set_aiming(next == AiTacticalState::EngageBurst);
+            }
             let label = GString::from(next.label());
             self.signals().state_changed().emit(&label);
         }
@@ -372,6 +405,20 @@ impl EnemyAiCapsule {
         player_pos: Vector3,
         has_los: bool,
     ) {
+        // Si el jugador se atrinchera oculto tras barreras, la IA táctica/veterana lanza granada.
+        if !has_los
+            && self.has_seen_player
+            && self.grenades_left > 0
+            && self.grenade_cooldown <= 0.0
+            && self.seconds_without_los >= 3.0
+        {
+            let target_pos = self.last_known_player_pos;
+            let dist = (target_pos - my_pos).length();
+            if (7.5..=24.0).contains(&dist) {
+                self.throw_grenade_at(my_pos, target_pos);
+            }
+        }
+
         let (ammo_in_mag, reserve_ammo, is_reloading) = if let Some(rig) = self.weapon_rig.clone() {
             let r = rig.bind();
             (r.get_ammo_in_mag(), r.get_reserve_ammo(), r.is_weapon_reloading())
@@ -398,7 +445,6 @@ impl EnemyAiCapsule {
                     return;
                 }
 
-                // Avanza hacia cobertura intermedia o última posición conocida del jugador.
                 if !self.has_cover_target || self.state_timer > 3.2 {
                     self.pick_advance_waypoint(my_pos, player_pos);
                 } else if (my_pos - self.current_cover_target).length() < 1.1 {
@@ -452,7 +498,6 @@ impl EnemyAiCapsule {
                     self.is_crouching = dist > 11.0 && (self.decision_seed % 2 == 0);
                 }
 
-                // Dispara una bala de la ráfaga actual hacia el pecho/cabeza del jugador.
                 self.fire_at_player(player_pos);
             }
 
@@ -478,7 +523,6 @@ impl EnemyAiCapsule {
 
             AiTacticalState::ReloadInCover => {
                 self.is_crouching = true;
-                // Permanece agachado hasta completar recarga y recuperar compostura.
                 if !is_reloading && self.state_timer >= 0.95 {
                     self.is_crouching = false;
                     self.bursts_fired_exposed = 0;
@@ -510,6 +554,50 @@ impl EnemyAiCapsule {
                 }
             }
         }
+    }
+
+    fn throw_grenade_at(&mut self, my_pos: Vector3, target_pos: Vector3) {
+        let Some(grenade_scene) = self.grenade_scene.clone() else {
+            return;
+        };
+        let Some(mut container) = self.fx_container.clone() else {
+            return;
+        };
+        let Some(instance) = grenade_scene.instantiate() else {
+            return;
+        };
+        let Ok(model_root) = instance.try_cast::<Node3D>() else {
+            return;
+        };
+
+        let start_pos = my_pos + Vector3::new(0.0, 1.45, 0.0);
+        let flat_delta = Vector3::new(target_pos.x - start_pos.x, 0.0, target_pos.z - start_pos.z);
+        let dist = flat_delta.length().max(2.0);
+        let flat_dir = flat_delta / dist;
+
+        // Tiro parabólico calculado para caer cerca de la cobertura enemiga.
+        let horiz_speed = (dist * 1.12).clamp(9.0, 19.5);
+        let throw_vel = flat_dir * horiz_speed + Vector3::new(0.0, 5.4, 0.0);
+
+        let mut grenade_node = FragGrenade::new_alloc();
+        grenade_node.set_name("EnemyFragGrenade");
+        grenade_node.add_child(&model_root);
+        container.add_child(&grenade_node);
+
+        let spin_anim = find_animation_player_recursive(&model_root);
+        let thrower_rid = Some(self.base().get_rid());
+        grenade_node.bind_mut().launch(
+            start_pos + flat_dir * 0.65,
+            throw_vel,
+            thrower_rid,
+            self.explosion_scene.clone(),
+            Some(container),
+            spin_anim,
+        );
+
+        self.grenades_left -= 1;
+        self.grenade_cooldown = 10.0;
+        self.signals().grenade_thrown().emit();
     }
 
     fn apply_movement_and_aim(
@@ -545,7 +633,6 @@ impl EnemyAiCapsule {
                 }
             }
             AiTacticalState::EngageBurst => {
-                // Desplazamiento lateral táctico para no ser un blanco estático.
                 let xform = self.base().get_global_transform();
                 let right = xform.basis.col_a();
                 let flat_right = Vector3::new(right.x, 0.0, right.z).normalized_or_zero();
@@ -594,7 +681,6 @@ impl EnemyAiCapsule {
             self.step_distance_accum = 0.4;
         }
 
-        // Orientación suave hacia el jugador o hacia la dirección de carrera al huir a cobertura.
         let look_target = if has_los || self.state == AiTacticalState::EngageBurst {
             player_pos
         } else if desired_vel.length_squared() > 0.25 {
@@ -624,7 +710,6 @@ impl EnemyAiCapsule {
 
         let my_pos = self.base().get_global_position();
         let aim_origin = my_pos + Vector3::new(0.0, if self.is_crouching { 0.85 } else { 1.25 }, 0.0);
-        // Sutil oscilación humana en la puntería para no acertar el 100% de las balas en el centro exacto.
         let sway = ((self.state_timer * 3.1).sin() as f32) * 0.22;
         let aim_target = player_pos + Vector3::new(sway, 1.02, 0.0);
         let aim_dir = (aim_target - aim_origin).normalized_or_zero();
@@ -632,10 +717,11 @@ impl EnemyAiCapsule {
         let vel = self.base().get_velocity();
         let speed_ratio = Vector2::new(vel.x, vel.z).length() / self.walk_speed.max(0.1);
         let heat = rig.bind().get_recoil_heat();
-        let spread = calculate_effective_spread_deg(
+        let spread = calculate_tactical_spread_deg(
             self.difficulty_base_spread(),
             speed_ratio,
             self.is_crouching,
+            false,
             heat,
         );
 
@@ -666,7 +752,6 @@ impl EnemyAiCapsule {
 
         let points = self.cover_points.clone();
         for (idx, pt) in points.iter().enumerate() {
-            // Comprueba mediante raycast real si la barrera bloquea la línea de visión estando agachado.
             let cover_eye = *pt + Vector3::new(0.0, 0.85, 0.0);
             let threat_eye = threat_pos + Vector3::new(0.0, 1.35, 0.0);
             let has_los_from_cover = self.check_line_of_sight(cover_eye, threat_eye, player_rid);
@@ -679,7 +764,6 @@ impl EnemyAiCapsule {
                 blocks_los,
                 11.5,
             );
-            // Pequeña variación para que la IA no repita exactamente la misma esquina cada ronda.
             if (idx as u32) == (self.decision_seed % (points.len().max(1) as u32)) {
                 score += 4.5;
             }
@@ -691,7 +775,6 @@ impl EnemyAiCapsule {
         }
 
         if points.is_empty() {
-            // Respaldo si aún no se registraron coberturas: retrocede lateralmente.
             let away = (my_pos - threat_pos).normalized_or_zero();
             best_pos = my_pos + away * 5.0;
         }

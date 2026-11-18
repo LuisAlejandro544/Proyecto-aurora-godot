@@ -98,6 +98,7 @@ func _bootstrap_assets_and_world() -> bool:
 
 	_connect_weapon_hud_signals()
 	combat_audio.attach_to_combatants(player, enemy_ai)
+	combat_audio.attach_fx_container(arena.fx_container)
 	_assets_ready = true
 	loading_bar.value = 100.0
 	return true
@@ -118,9 +119,12 @@ func _connect_ui_signals() -> void:
 	ui_hud.sprint_changed.connect(func(sp: bool): player.call("set_sprinting", sp))
 	ui_hud.look_delta_input.connect(func(d: Vector2): player.call("add_look_delta", d))
 	ui_hud.fire_state_changed.connect(func(f: bool): player.call("set_firing", f))
+	ui_hud.aim_toggled.connect(func(a: bool): player.call("set_aiming", a))
 	ui_hud.reload_pressed.connect(func(): player.call("trigger_reload"))
 	ui_hud.crouch_toggled.connect(func(c: bool): player.call("set_crouching", c))
 	ui_hud.jump_pressed.connect(func(): player.call("trigger_jump"))
+	ui_hud.dive_pressed.connect(func(): player.call("trigger_dive"))
+	ui_hud.grenade_pressed.connect(func(): player.call("trigger_grenade"))
 	ui_hud.camera_toggle_pressed.connect(_toggle_camera_perspective)
 	ui_hud.pause_pressed.connect(_open_pause)
 
@@ -149,7 +153,17 @@ func _connect_combat_signals() -> void:
 	player.connect("took_damage", func(_amt: float, attacker_pos: Vector3):
 		ui_hud.notify_took_damage(attacker_pos, player.global_transform)
 	)
-	player.connect("died", _on_player_died)
+	player.connect("aim_changed", func(aiming: bool):
+		ui_hud.set_aim_state(aiming)
+	)
+	player.connect("grenades_changed", func(count: int):
+		ui_hud.update_grenades(count)
+	)
+	player.connect("stance_state_changed", func(state_txt: String):
+		ui_hud.set_stance_state(state_txt)
+	)
+	# CONNECT_DEFERRED evita re-entrar a los nodos Rust mientras apply_bullet_damage aún mantiene &mut self.
+	player.connect("died", _on_player_died, CONNECT_DEFERRED)
 
 	enemy_ai.connect("health_changed", func(cur: float, mx: float):
 		ui_hud.update_enemy_health(cur, mx)
@@ -157,7 +171,7 @@ func _connect_combat_signals() -> void:
 	enemy_ai.connect("state_changed", func(state_name: String):
 		ui_hud.update_enemy_state(state_name)
 	)
-	enemy_ai.connect("died", _on_enemy_died)
+	enemy_ai.connect("died", _on_enemy_died, CONNECT_DEFERRED)
 
 
 func _connect_weapon_hud_signals() -> void:
@@ -241,6 +255,7 @@ func _on_enemy_died() -> void:
 
 func _finish_round(player_won: bool) -> void:
 	var session_id := _match_session_id
+	ui_hud.release_combat_touches()
 	player.call("set_controls_enabled", false)
 	enemy_ai.call("set_ai_active", false)
 	ui_hud.update_scoreboard(_player_score, _ai_score, _current_round, _rounds_to_win)

@@ -29,6 +29,7 @@ from scene_utils import (
     make_pbr_material,
 )
 from weapon_classic_rifle import _build_rifle_geometry, _create_animations, build_classic_rifle
+from weapon_frag_grenade import build_frag_grenade
 
 
 def _setup_cycles_render(res_x=1080, res_y=640, samples=24, bg_color=(0.14, 0.16, 0.20, 1.0)):
@@ -219,6 +220,13 @@ def render_all_previews(out_dir="previews"):
     # 5. Ciudad destruida — Vista a nivel de calle (altura de jugador ~1.7m)
     _point_camera("CamCityStreet", (-1.8, -15.2, 1.75), (1.0, 4.0, 1.4), lens=28.0)
     _render_to(os.path.join(out_dir, "05_ruined_city_street_cover.png"))
+
+    # 6. Granada de fragmentación táctica
+    build_frag_grenade(output_glb=None)
+    _setup_cycles_render(res_x=880, res_y=620, samples=26, bg_color=(0.11, 0.13, 0.16, 1.0))
+    _add_studio_lights()
+    _point_camera("CamGrenade", (0.26, -0.34, 0.14), (0.01, 0.0, 0.02), lens=45.0)
+    _render_to(os.path.join(out_dir, "06_frag_grenade_overview.png"))
 
 
 if __name__ == "__main__":

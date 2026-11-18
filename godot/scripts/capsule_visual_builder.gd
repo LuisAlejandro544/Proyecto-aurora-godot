@@ -69,6 +69,14 @@ static func build_capsule_and_weapon(
 	weapon_rig.call("set_fx_scenes", assets.get_scene("bullet"), assets.get_scene("casing"))
 	weapon_rig.call("set_fx_container", fx_container)
 
+	if character_root.has_method("set_grenade_scenes"):
+		character_root.call(
+			"set_grenade_scenes",
+			assets.get_scene("grenade"),
+			assets.get_scene("explosion"),
+			fx_container
+		)
+
 
 static func _populate_capsule_visuals(visual_pivot: Node3D, is_player: bool) -> void:
 	for child in visual_pivot.get_children():

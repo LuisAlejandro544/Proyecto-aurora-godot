@@ -1,9 +1,8 @@
-## Gestor modular de efectos de sonido de combate (audio CC0 en formato OGG).
+## Gestor modular de efectos de sonido de combate (audio CC0 OGG + síntesis WAV procedural).
 ##
-## Carga los efectos de disparo de rifle 7.62, recarga, caída de casquillos,
-## pasos sobre concreto y aterrizaje; conecta tanto al jugador (audio directo 2D
-## con polifonía para ráfagas rápidas) como a la IA enemiga (audio espacial 3D
-## posicional para escuchar disparos y flanqueos por dirección).
+## Carga los efectos de disparo de rifle 7.62, recarga, caída de casquillos, pasos y aterrizaje,
+## y sintetiza de forma limpia en memoria buffers WAV para deslizamiento (slide), lanzamiento
+## en plancha (dive), lanzamiento de granada y detonación 3D espacial en el epicentro.
 
 class_name CombatAudio
 extends Node
@@ -30,16 +29,20 @@ var _p_reload: AudioStreamPlayer
 var _p_casing: AudioStreamPlayer
 var _p_step: AudioStreamPlayer
 var _p_land: AudioStreamPlayer
+var _p_tactical: AudioStreamPlayer
 
 var _ai_shot_3d: AudioStreamPlayer3D
 var _ai_reload_3d: AudioStreamPlayer3D
 var _ai_step_3d: AudioStreamPlayer3D
 var _ai_land_3d: AudioStreamPlayer3D
+var _ai_tactical_3d: AudioStreamPlayer3D
+var _explosion_3d: AudioStreamPlayer3D
 
 
 func _ready() -> void:
 	_rng.randomize()
 	_preload_streams()
+	_build_procedural_tactical_streams()
 	_setup_player_channels()
 
 
@@ -50,6 +53,13 @@ func _preload_streams() -> void:
 			var stream := load(path) as AudioStream
 			if stream != null:
 				_streams[key] = stream
+
+
+func _build_procedural_tactical_streams() -> void:
+	_streams["slide"] = _synth_slide_wav()
+	_streams["dive"] = _synth_dive_wav()
+	_streams["grenade_throw"] = _synth_throw_wav()
+	_streams["explosion"] = _synth_explosion_wav()
 
 
 func _setup_player_channels() -> void:
@@ -83,6 +93,40 @@ func _setup_player_channels() -> void:
 	_p_land.volume_db = -4.0
 	add_child(_p_land)
 
+	_p_tactical = AudioStreamPlayer.new()
+	_p_tactical.name = "PlayerTacticalAudio"
+	_p_tactical.max_polyphony = 4
+	_p_tactical.volume_db = -3.0
+	add_child(_p_tactical)
+
+	_explosion_3d = _make_3d_player("GrenadeExplosion3D", 4, 14.0, 85.0, 2.5)
+	add_child(_explosion_3d)
+
+
+func attach_fx_container(fx_container: Node3D) -> void:
+	if fx_container == null:
+		return
+	if not fx_container.is_connected("child_entered_tree", _on_fx_child_entered):
+		fx_container.connect("child_entered_tree", _on_fx_child_entered)
+
+
+func _on_fx_child_entered(child: Node) -> void:
+	if child != null and child.has_signal("detonated"):
+		if not child.is_connected("detonated", _on_grenade_detonated):
+			child.connect("detonated", _on_grenade_detonated)
+
+
+func _on_grenade_detonated(pos: Vector3) -> void:
+	if _explosion_3d == null or not is_instance_valid(_explosion_3d):
+		return
+	var s := _streams.get("explosion", null) as AudioStream
+	if s == null:
+		return
+	_explosion_3d.global_position = pos
+	_explosion_3d.stream = s
+	_explosion_3d.pitch_scale = _rng.randf_range(0.92, 1.08)
+	_explosion_3d.play()
+
 
 func attach_to_combatants(player_node: Node3D, enemy_node: Node3D) -> void:
 	if player_node != null:
@@ -90,6 +134,12 @@ func attach_to_combatants(player_node: Node3D, enemy_node: Node3D) -> void:
 			player_node.connect("footstep_triggered", _on_player_footstep)
 		if not player_node.is_connected("landed", _on_player_landed):
 			player_node.connect("landed", _on_player_landed)
+		if player_node.has_signal("slide_triggered") and not player_node.is_connected("slide_triggered", _on_player_slide):
+			player_node.connect("slide_triggered", _on_player_slide)
+		if player_node.has_signal("dive_triggered") and not player_node.is_connected("dive_triggered", _on_player_dive):
+			player_node.connect("dive_triggered", _on_player_dive)
+		if player_node.has_signal("grenade_thrown") and not player_node.is_connected("grenade_thrown", _on_player_grenade_thrown):
+			player_node.connect("grenade_thrown", _on_player_grenade_thrown)
 
 		var p_rig := player_node.call("get_weapon_rig") as Node
 		if p_rig != null:
@@ -104,6 +154,8 @@ func attach_to_combatants(player_node: Node3D, enemy_node: Node3D) -> void:
 			enemy_node.connect("footstep_triggered", _on_enemy_footstep)
 		if not enemy_node.is_connected("landed", _on_enemy_landed):
 			enemy_node.connect("landed", _on_enemy_landed)
+		if enemy_node.has_signal("grenade_thrown") and not enemy_node.is_connected("grenade_thrown", _on_enemy_grenade_thrown):
+			enemy_node.connect("grenade_thrown", _on_enemy_grenade_thrown)
 
 		var ai_rig := enemy_node.call("get_weapon_rig") as Node
 		if ai_rig != null:
@@ -128,6 +180,9 @@ func _ensure_enemy_audio_nodes(enemy_node: Node3D) -> void:
 
 	_ai_land_3d = _make_3d_player("EnemyLand3D", 2, 5.0, 28.0, -3.0)
 	enemy_node.add_child(_ai_land_3d)
+
+	_ai_tactical_3d = _make_3d_player("EnemyTactical3D", 2, 6.0, 34.0, -2.5)
+	enemy_node.add_child(_ai_tactical_3d)
 
 
 func _make_3d_player(node_name: String, polyphony: int, unit_sz: float, max_dist: float, vol_db: float) -> AudioStreamPlayer3D:
@@ -161,6 +216,36 @@ func _next_step_stream() -> AudioStream:
 	_step_index = (_step_index + 1) % 4
 	var key := "step_%d" % (_step_index + 1)
 	return _streams.get(key, _streams.get("step_1", null)) as AudioStream
+
+
+func _play_player_tactical(key: String, pitch_min: float = 0.95, pitch_max: float = 1.05) -> void:
+	var s := _streams.get(key, null) as AudioStream
+	if s == null or _p_tactical == null:
+		return
+	_p_tactical.stream = s
+	_p_tactical.pitch_scale = _rng.randf_range(pitch_min, pitch_max)
+	_p_tactical.play()
+
+
+func _on_player_slide() -> void:
+	_play_player_tactical("slide", 0.94, 1.06)
+
+
+func _on_player_dive() -> void:
+	_play_player_tactical("dive", 0.95, 1.05)
+
+
+func _on_player_grenade_thrown() -> void:
+	_play_player_tactical("grenade_throw", 0.97, 1.05)
+
+
+func _on_enemy_grenade_thrown() -> void:
+	if _ai_tactical_3d == null or not is_instance_valid(_ai_tactical_3d):
+		return
+	var s := _streams.get("grenade_throw", null) as AudioStream
+	if s != null:
+		_ai_tactical_3d.stream = s
+		_ai_tactical_3d.play()
 
 
 func _on_player_weapon_fired() -> void:
@@ -263,3 +348,78 @@ func _on_enemy_landed() -> void:
 	if s != null:
 		_ai_land_3d.stream = s
 		_ai_land_3d.play()
+
+
+func _synth_slide_wav() -> AudioStreamWAV:
+	var rate := 22050
+	var count := int(rate * 0.44)
+	var bytes := PackedByteArray()
+	bytes.resize(count * 2)
+	var lp := 0.0
+	for i in range(count):
+		var t := float(i) / float(count)
+		var env := sin(minf(t * 7.0, PI * 0.5)) * pow(1.0 - t, 1.25)
+		var noise := _rng.randf_range(-1.0, 1.0)
+		lp = lerpf(lp, noise, 0.22 - 0.14 * t)
+		var sample := clampf(lp * env * 0.72, -1.0, 1.0)
+		bytes.encode_s16(i * 2, int(sample * 32767.0))
+	return _make_wav(bytes, rate)
+
+
+func _synth_dive_wav() -> AudioStreamWAV:
+	var rate := 22050
+	var count := int(rate * 0.30)
+	var bytes := PackedByteArray()
+	bytes.resize(count * 2)
+	var lp := 0.0
+	for i in range(count):
+		var t := float(i) / float(count)
+		var env := pow(1.0 - t, 1.6)
+		var thump := sin(TAU * (120.0 - 70.0 * t) * (float(i) / float(rate))) * exp(-t * 9.0) * 0.55
+		lp = lerpf(lp, _rng.randf_range(-1.0, 1.0), 0.32)
+		var sample := clampf((lp * 0.48 + thump) * env, -1.0, 1.0)
+		bytes.encode_s16(i * 2, int(sample * 32767.0))
+	return _make_wav(bytes, rate)
+
+
+func _synth_throw_wav() -> AudioStreamWAV:
+	var rate := 22050
+	var count := int(rate * 0.22)
+	var bytes := PackedByteArray()
+	bytes.resize(count * 2)
+	var lp := 0.0
+	for i in range(count):
+		var t := float(i) / float(count)
+		var sec := float(i) / float(rate)
+		var pin_click := sin(TAU * 1650.0 * sec) * exp(-t * 28.0) * 0.35
+		var whoosh_env := sin(t * PI)
+		lp = lerpf(lp, _rng.randf_range(-1.0, 1.0), 0.28)
+		var sample := clampf(pin_click + lp * whoosh_env * 0.45, -1.0, 1.0)
+		bytes.encode_s16(i * 2, int(sample * 32767.0))
+	return _make_wav(bytes, rate)
+
+
+func _synth_explosion_wav() -> AudioStreamWAV:
+	var rate := 22050
+	var count := int(rate * 1.05)
+	var bytes := PackedByteArray()
+	bytes.resize(count * 2)
+	var lp := 0.0
+	for i in range(count):
+		var t := float(i) / float(count)
+		var sec := float(i) / float(rate)
+		var sub := sin(TAU * (92.0 - 58.0 * minf(t * 2.5, 1.0)) * sec) * exp(-t * 3.8)
+		var crack := _rng.randf_range(-1.0, 1.0) * exp(-t * 5.2)
+		lp = lerpf(lp, crack, 0.18)
+		var sample := clampf((sub * 0.78 + lp * 0.85 + crack * 0.22) * 0.85, -1.0, 1.0)
+		bytes.encode_s16(i * 2, int(sample * 32767.0))
+	return _make_wav(bytes, rate)
+
+
+func _make_wav(pcm_bytes: PackedByteArray, mix_rate: int) -> AudioStreamWAV:
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = mix_rate
+	wav.stereo = false
+	wav.data = pcm_bytes
+	return wav

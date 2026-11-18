@@ -1,9 +1,10 @@
-## Interfaz de combate móvil (HUD táctico + controles multitáctiles).
+## Interfaz de combate móvil (HUD táctico + controles multitáctiles Warzone).
 ##
 ## Implementa joystick virtual izquierdo con sprint en borde exterior, botón de disparo
-## que permite arrastrar el mismo dedo para girar la cámara mientras disparas, zona derecha
-## de apuntado independiente, indicadores direccionales de daño, banner de reaparición
-## automática, mira dinámica, hitmarker y marcador de rondas.
+## con apuntado continuo al deslizar el dedo, botón ADS (apuntar por mira), botón de
+## granada con contador, botón de lanzamiento en plancha (Dolphin Dive), agachado/slide,
+## salto/slide-cancel, recarga sincronizada incluso apuntando, indicadores direccionales
+## de daño, banner de reaparición automática, mira dinámica y marcador de rondas.
 
 class_name TouchHud
 extends Control
@@ -12,9 +13,12 @@ signal move_input_changed(vec: Vector2)
 signal sprint_changed(sprinting: bool)
 signal look_delta_input(delta: Vector2)
 signal fire_state_changed(firing: bool)
+signal aim_toggled(aiming: bool)
 signal reload_pressed()
 signal crouch_toggled(crouching: bool)
 signal jump_pressed()
+signal dive_pressed()
+signal grenade_pressed()
 signal camera_toggle_pressed()
 signal pause_pressed()
 
@@ -56,11 +60,21 @@ signal pause_pressed()
 @onready var joystick_knob: Control = %JoystickKnob
 
 @onready var btn_fire: Button = %BtnFire
+@onready var btn_aim: Button = %BtnAim
 @onready var btn_reload: Button = %BtnReload
 @onready var btn_crouch: Button = %BtnCrouch
 @onready var btn_jump: Button = %BtnJump
+@onready var btn_dive: Button = %BtnDive
+@onready var btn_grenade: Button = %BtnGrenade
 @onready var btn_camera: Button = %BtnCamera
 @onready var btn_pause: Button = %BtnPause
+
+@onready var fire_icon: TacticalButtonIcon = %FireIcon
+@onready var aim_icon: TacticalButtonIcon = %AimIcon
+@onready var reload_icon: TacticalButtonIcon = %ReloadIcon
+@onready var crouch_icon: TacticalButtonIcon = %CrouchIcon
+@onready var grenade_icon: TacticalButtonIcon = %GrenadeIcon
+@onready var camera_icon: TacticalButtonIcon = %CameraIcon
 
 var invert_y: bool = false
 var _joy_touch_index: int = -1
@@ -69,6 +83,7 @@ var _fire_touch_index: int = -1
 var _joy_center: Vector2 = Vector2.ZERO
 var _joy_radius: float = 68.0
 var _is_crouching: bool = false
+var _is_aiming: bool = false
 var _is_reloading: bool = false
 var _reload_duration: float = 2.3
 var _reload_elapsed: float = 0.0
@@ -86,9 +101,12 @@ func _ready() -> void:
 	respawn_banner.visible = false
 	_reset_directional_damage()
 
+	btn_aim.pressed.connect(_on_aim_pressed)
 	btn_reload.pressed.connect(func(): reload_pressed.emit())
 	btn_crouch.pressed.connect(_on_crouch_pressed)
 	btn_jump.pressed.connect(func(): jump_pressed.emit())
+	btn_dive.pressed.connect(func(): dive_pressed.emit())
+	btn_grenade.pressed.connect(func(): grenade_pressed.emit())
 	btn_camera.pressed.connect(func(): camera_toggle_pressed.emit())
 	btn_pause.pressed.connect(func(): pause_pressed.emit())
 
@@ -119,9 +137,9 @@ func _process(delta: float) -> void:
 		_reload_elapsed += delta
 		reload_bar.value = clampf(_reload_elapsed / max(_reload_duration, 0.1), 0.0, 1.0)
 
-	# Anima suavemente la apertura de los 4 trazos de la mira.
-	var target_gap := 6.0 if _is_crouching else 11.0
-	_crosshair_spread_px = lerpf(_crosshair_spread_px, target_gap, minf(delta * 10.0, 1.0))
+	# Retícula más cerrada al apuntar ADS o agacharse.
+	var target_gap := 3.5 if _is_aiming else (6.5 if _is_crouching else 11.5)
+	_crosshair_spread_px = lerpf(_crosshair_spread_px, target_gap, minf(delta * 12.0, 1.0))
 	tick_top.position.y = -_crosshair_spread_px - tick_top.size.y
 	tick_bottom.position.y = _crosshair_spread_px
 	tick_left.position.x = -_crosshair_spread_px - tick_left.size.x
@@ -139,8 +157,7 @@ func _input(event: InputEvent) -> void:
 				_joy_touch_index = st.index
 				_update_joystick_center()
 				_apply_joystick_drag(st.position)
-			elif _fire_touch_index == -1 and btn_fire.visible and btn_fire.get_global_rect().has_point(st.position):
-				# Al pulsar DISPARAR se activa el fuego y este mismo dedo puede deslizarse para apuntar.
+			elif _fire_touch_index == -1 and btn_fire.visible and _is_over_circular_control(btn_fire, st.position):
 				_fire_touch_index = st.index
 				_set_fire_visual(true)
 				fire_state_changed.emit(true)
@@ -165,7 +182,6 @@ func _input(event: InputEvent) -> void:
 				d.y = -d.y
 			look_delta_input.emit(d)
 		elif sd.index == _fire_touch_index and _look_touch_index == -1:
-			# Permite mover la cámara libremente mientras mantienes pulsado el botón de disparo.
 			var d := sd.relative
 			if invert_y:
 				d.y = -d.y
@@ -180,21 +196,29 @@ func _input(event: InputEvent) -> void:
 			look_delta_input.emit(d)
 
 
-func reset_hud_for_round(p_score: int, ai_score: int, current_round: int, rounds_to_win: int) -> void:
+func release_combat_touches() -> void:
 	_reset_joystick()
 	_reset_fire_touch()
 	_look_touch_index = -1
+
+
+func reset_hud_for_round(p_score: int, ai_score: int, current_round: int, rounds_to_win: int) -> void:
+	release_combat_touches()
 	_is_crouching = false
+	_is_aiming = false
 	_is_reloading = false
 	reload_bar.visible = false
 	reload_status_label.text = "LISTO"
-	reload_status_label.modulate = Color(0.50, 0.92, 0.65)
+	reload_status_label.add_theme_color_override("font_color", Color(0.50, 0.92, 0.65))
+	reload_icon.is_active = false
 	hitmarker.visible = false
 	damage_vignette.modulate.a = 0.0
 	_reset_directional_damage()
-	stance_label.text = "DE PIE"
-	stance_label.modulate = Color(0.32, 0.84, 0.98)
+	set_stance_state("DE PIE")
 	btn_crouch.modulate = Color.WHITE
+	crouch_icon.is_active = false
+	set_aim_state(false)
+	update_grenades(2)
 	update_scoreboard(p_score, ai_score, current_round, rounds_to_win)
 	update_player_health(100.0, 100.0)
 	update_enemy_health(100.0, 100.0)
@@ -203,12 +227,49 @@ func reset_hud_for_round(p_score: int, ai_score: int, current_round: int, rounds
 
 
 func set_camera_mode_label(first_person: bool) -> void:
-	btn_camera.text = "CAM 1P" if first_person else "CAM 3P"
+	camera_icon.badge_text = "1P" if first_person else "3P"
+	camera_icon.is_active = first_person
+
+
+func set_aim_state(aiming: bool) -> void:
+	_is_aiming = aiming
+	btn_aim.modulate = Color(0.52, 0.92, 1.0) if aiming else Color.WHITE
+	aim_icon.is_active = aiming
+
+
+func update_grenades(count: int) -> void:
+	grenade_icon.badge_text = str(maxi(count, 0))
+	btn_grenade.modulate = Color.WHITE if count > 0 else Color(0.65, 0.65, 0.68, 0.65)
+
+
+func set_stance_state(state_txt: String) -> void:
+	stance_label.text = state_txt
+	match state_txt:
+		"DESLIZANDO":
+			stance_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.22))
+			_is_crouching = true
+		"LANZÁNDOSE":
+			stance_label.add_theme_color_override("font_color", Color(1.0, 0.44, 0.24))
+			_is_crouching = true
+		"APUNTANDO", "APUNTANDO (AG.)":
+			stance_label.add_theme_color_override("font_color", Color(0.38, 0.96, 0.88))
+			_is_crouching = state_txt.ends_with("(AG.)")
+		"AGACHADO":
+			stance_label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.28))
+			_is_crouching = true
+		"SPRINT":
+			stance_label.add_theme_color_override("font_color", Color(0.98, 0.74, 0.26))
+			_is_crouching = false
+		_:
+			stance_label.add_theme_color_override("font_color", Color(0.32, 0.84, 0.98))
+			_is_crouching = false
+	btn_crouch.modulate = Color(1.0, 0.86, 0.45) if _is_crouching else Color.WHITE
+	crouch_icon.is_active = _is_crouching
 
 
 func show_respawn_banner(title_text: String, subtitle_text: String, accent: Color, auto_hide_sec: float = 0.0) -> void:
 	respawn_title.text = title_text
-	respawn_title.modulate = accent
+	respawn_title.add_theme_color_override("font_color", accent)
 	respawn_subtitle.text = subtitle_text
 	respawn_banner.visible = true
 	_banner_auto_hide_timer = auto_hide_sec
@@ -242,7 +303,7 @@ func update_enemy_state(state_text: String) -> void:
 
 func update_ammo(in_mag: int, reserve: int) -> void:
 	ammo_label.text = "%02d / %03d" % [in_mag, reserve]
-	ammo_label.modulate = Color(1.0, 0.35, 0.25) if in_mag <= 6 else Color.WHITE
+	ammo_label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.25) if in_mag <= 6 else Color.WHITE)
 
 
 func notify_reload_started(duration: float) -> void:
@@ -251,19 +312,22 @@ func notify_reload_started(duration: float) -> void:
 	_reload_elapsed = 0.0
 	reload_bar.value = 0.0
 	reload_bar.visible = true
-	reload_status_label.text = "RECARGANDO"
-	reload_status_label.modulate = Color(0.98, 0.72, 0.24)
+	reload_status_label.text = "REC. EN MIRA" if _is_aiming else "RECARGANDO"
+	reload_status_label.add_theme_color_override("font_color", Color(0.98, 0.72, 0.24))
+	reload_icon.is_active = true
 
 
 func notify_reload_finished() -> void:
 	_is_reloading = false
 	reload_bar.visible = false
 	reload_status_label.text = "LISTO"
-	reload_status_label.modulate = Color(0.50, 0.92, 0.65)
+	reload_status_label.add_theme_color_override("font_color", Color(0.50, 0.92, 0.65))
+	reload_icon.is_active = false
 
 
 func notify_weapon_fired() -> void:
-	_crosshair_spread_px = minf(_crosshair_spread_px + 6.5, 28.0)
+	var kick := 3.5 if _is_aiming else 6.5
+	_crosshair_spread_px = minf(_crosshair_spread_px + kick, 26.0)
 
 
 func notify_hit_confirmed() -> void:
@@ -316,12 +380,12 @@ func _reset_directional_damage() -> void:
 	dmg_right.modulate.a = 0.0
 
 
+func _on_aim_pressed() -> void:
+	aim_toggled.emit(not _is_aiming)
+
+
 func _on_crouch_pressed() -> void:
-	_is_crouching = not _is_crouching
-	stance_label.text = "AGACHADO" if _is_crouching else "DE PIE"
-	stance_label.modulate = Color(1.0, 0.78, 0.28) if _is_crouching else Color(0.32, 0.84, 0.98)
-	btn_crouch.modulate = Color(1.0, 0.80, 0.32) if _is_crouching else Color.WHITE
-	crouch_toggled.emit(_is_crouching)
+	crouch_toggled.emit(not _is_crouching)
 
 
 func _update_joystick_center() -> void:
@@ -340,9 +404,6 @@ func _apply_joystick_drag(touch_pos: Vector2) -> void:
 	var normalized := offset / _joy_radius
 	var sprinting := dist >= _joy_radius * 0.86 and normalized.y < -0.55
 	sprint_ring.modulate = Color(1.0, 0.78, 0.28, 1.0) if sprinting else Color(1.0, 1.0, 1.0, 0.55)
-	if not _is_crouching:
-		stance_label.text = "SPRINT" if sprinting else "DE PIE"
-		stance_label.modulate = Color(0.98, 0.74, 0.26) if sprinting else Color(0.32, 0.84, 0.98)
 	move_input_changed.emit(normalized)
 	sprint_changed.emit(sprinting)
 
@@ -351,9 +412,6 @@ func _reset_joystick() -> void:
 	_joy_touch_index = -1
 	joystick_knob.position = (joystick_base.size * 0.5) - (joystick_knob.size * 0.5)
 	sprint_ring.modulate = Color(1.0, 1.0, 1.0, 0.55)
-	if not _is_crouching:
-		stance_label.text = "DE PIE"
-		stance_label.modulate = Color(0.32, 0.84, 0.98)
 	move_input_changed.emit(Vector2.ZERO)
 	sprint_changed.emit(false)
 
@@ -366,10 +424,18 @@ func _reset_fire_touch() -> void:
 
 func _set_fire_visual(active: bool) -> void:
 	btn_fire.modulate = Color(1.15, 0.92, 0.65) if active else Color.WHITE
+	fire_icon.is_active = active
+
+
+func _is_over_circular_control(ctrl: Control, pos: Vector2) -> bool:
+	var rect := ctrl.get_global_rect()
+	var center := rect.position + rect.size * 0.5
+	var radius := maxf(rect.size.x, rect.size.y) * 0.54
+	return pos.distance_to(center) <= radius
 
 
 func _is_over_non_fire_button(pos: Vector2) -> bool:
-	for btn in [btn_reload, btn_crouch, btn_jump, btn_camera, btn_pause]:
-		if btn.visible and btn.get_global_rect().has_point(pos):
+	for btn in [btn_aim, btn_reload, btn_crouch, btn_jump, btn_dive, btn_grenade, btn_camera, btn_pause]:
+		if btn.visible and _is_over_circular_control(btn, pos):
 			return true
 	return false

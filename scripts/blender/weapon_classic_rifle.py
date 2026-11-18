@@ -461,7 +461,7 @@ def _keyframe_loc_rot(obj, frame, loc=None, rot_deg=None):
 
 
 def _create_animations(root, bolt_carrier, magazine):
-    """Genera las 3 animaciones principales (idle, fire, reload) en NLA tracks independientes."""
+    """Genera las animaciones principales (idle, fire, reload, aim_idle, aim_reload) en NLA tracks independientes."""
     base_bolt_loc = tuple(bolt_carrier.location)
     base_mag_loc = tuple(magazine.location)
 
@@ -521,6 +521,44 @@ def _create_animations(root, bolt_carrier, magazine):
     _keyframe_loc_rot(bolt_carrier, 60, base_bolt_loc)
     _keyframe_loc_rot(bolt_carrier, 70, base_bolt_loc)
     push_action_to_nla(bolt_carrier, act_bolt_reload, "reload", start_frame=1)
+
+    # --- 4. AIM_IDLE (frames 1..40): Estabilidad firme al apuntar por la mira ---
+    act_root_aim_idle = bpy.data.actions.new("aim_idle")
+    root.animation_data.action = act_root_aim_idle
+    _keyframe_loc_rot(root, 1, (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+    _keyframe_loc_rot(root, 20, (0.0, 0.0, 0.0012), (0.0, -0.15, 0.0))
+    _keyframe_loc_rot(root, 40, (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+    push_action_to_nla(root, act_root_aim_idle, "aim_idle", start_frame=1)
+
+    # --- 5. AIM_RELOAD (frames 1..66): Recarga manteniendo la mira alineada al frente ---
+    act_root_aim_reload = bpy.data.actions.new("aim_reload")
+    root.animation_data.action = act_root_aim_reload
+    _keyframe_loc_rot(root, 1, (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+    _keyframe_loc_rot(root, 10, (-0.012, 0.004, -0.006), (-5.5, 2.5, 3.0))
+    _keyframe_loc_rot(root, 40, (-0.012, 0.004, -0.006), (-4.5, 2.0, 2.5))
+    _keyframe_loc_rot(root, 52, (-0.022, 0.0, -0.004), (-3.0, 1.5, 1.5))
+    _keyframe_loc_rot(root, 66, (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+    push_action_to_nla(root, act_root_aim_reload, "aim_reload", start_frame=1)
+
+    act_mag_aim_reload = bpy.data.actions.new("aim_reload_mag")
+    magazine.animation_data.action = act_mag_aim_reload
+    _keyframe_loc_rot(magazine, 1, base_mag_loc, (0.0, 0.0, 0.0))
+    _keyframe_loc_rot(magazine, 8, base_mag_loc, (0.0, 0.0, 0.0))
+    _keyframe_loc_rot(magazine, 16, (base_mag_loc[0] + 0.020, 0.0, base_mag_loc[2] - 0.045), (0.0, -22.0, 0.0))
+    _keyframe_loc_rot(magazine, 26, (base_mag_loc[0] + 0.048, 0.0, base_mag_loc[2] - 0.28), (0.0, -28.0, 0.0))
+    _keyframe_loc_rot(magazine, 35, (base_mag_loc[0] + 0.020, 0.0, base_mag_loc[2] - 0.045), (0.0, -20.0, 0.0))
+    _keyframe_loc_rot(magazine, 42, base_mag_loc, (0.0, 0.0, 0.0))
+    _keyframe_loc_rot(magazine, 66, base_mag_loc, (0.0, 0.0, 0.0))
+    push_action_to_nla(magazine, act_mag_aim_reload, "aim_reload", start_frame=1)
+
+    act_bolt_aim_reload = bpy.data.actions.new("aim_reload_bolt")
+    bolt_carrier.animation_data.action = act_bolt_aim_reload
+    _keyframe_loc_rot(bolt_carrier, 1, base_bolt_loc)
+    _keyframe_loc_rot(bolt_carrier, 45, base_bolt_loc)
+    _keyframe_loc_rot(bolt_carrier, 52, (base_bolt_loc[0] - 0.088, base_bolt_loc[1], base_bolt_loc[2]))
+    _keyframe_loc_rot(bolt_carrier, 58, base_bolt_loc)
+    _keyframe_loc_rot(bolt_carrier, 66, base_bolt_loc)
+    push_action_to_nla(bolt_carrier, act_bolt_aim_reload, "aim_reload", start_frame=1)
 
 
 def build_classic_rifle(output_glb="godot/assets/models/classic_assault_rifle.glb"):

@@ -167,7 +167,7 @@ text = "INFORME TÁCTICO DE ARENA Y ARMAMENTO"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.84, 0.87, 0.92, 1)
 theme_override_font_sizes/font_size = 14
-text = "• Escenario: Ciudad destruida con barreras Jersey, trincheras de sacos, vehículos calcinados y edificios con rampa.\n• Arma principal: Rifle clásico 7.62 (30/120), fogonazo, trazadoras y casquillos expulsados.\n• IA local inteligente: evalúa línea de tiro real, se agacha tras barreras al recargar, dispara en ráfagas y flanquea si te escondes."
+text = "• Escenario: Ciudad destruida con barreras Jersey, trincheras de sacos, vehículos calcinados y edificios con rampa.\n• Armamento y equipamiento: Rifle clásico 7.62 (30/120) con apuntado por mira (ADS), recarga sin perder la mira y 2 granadas de fragmentación.\n• Movilidad avanzada e IA: Slide, Slide Cancel y lanzamiento en plancha frente a una IA local con cobertura real, flanqueo y granadas."
 autowrap_mode = 2
 
 [node name="ActionsRow" type="HBoxContainer" parent="MainMargin/RootHBox/LeftColumn"]
@@ -443,7 +443,7 @@ text = "CONTROLES MÓVILES Y CONSEJOS"
 [node name="Body" type="Label" parent="ControlsPopup/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
-text = "• Joystick izquierdo: mover la cápsula. Empujar al anillo superior activa carrera (sprint).\n• Mitad derecha / Botón DISPARAR: puedes deslizar el mismo dedo sobre DISPARAR para seguir apuntando mientras disparas.\n• Botón AGACHAR: reduce tu silueta detrás de barreras Jersey y sacos de arena y mejora la precisión del rifle 7.62.\n• Reaparición automática: tras caer en combate, reapareces automáticamente en pocos segundos hasta completar la meta.\n• Respaldo PC: WASD + Ratón, C (Agachar), R (Recargar), Espacio (Saltar)."
+text = "• Joystick izquierdo + Agachar = Slide: empuja el joystick al anillo Sprint y pulsa Agachar para deslizarte.\n• Slide Cancel: mientras deslizas, pulsa Saltar, Agachar o Apuntar (ADS) para cancelar el slide y recuperar postura al instante.\n• Lanzarse (Dive) y Granada: usa el botón de plancha para cruzar fuego enemigo y el botón de granada (2 por ronda) para desalojar coberturas.\n• Apuntar (ADS) y Recarga en mira: apunta con precisión reducida y recarga sin bajar la mira.\n• Respaldo PC: WASD + Ratón, Shift (Sprint), Clic Der / V (ADS), C (Agachar/Slide), X (Lanzarse), G (Granada), R (Recargar), Espacio (Saltar)."
 autowrap_mode = 2
 
 [node name="BtnCloseControls" type="Button" parent="ControlsPopup/VBox"]

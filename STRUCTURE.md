@@ -9,22 +9,25 @@ Organización modular de carpetas y propósito de cada archivo en el repositorio
 │   └── android-debug-apk.yml     # Action manual: baja .glb del Release, compila Rust y exporta APK Debug
 ├── scripts/blender/
 │   ├── scene_utils.py            # Utilidades compartidas (materiales PBR, primitivas, NLA y GLB)
-│   ├── weapon_classic_rifle.py   # Genera classic_assault_rifle.glb (idle, fire, reload)
+│   ├── weapon_classic_rifle.py   # Genera classic_assault_rifle.glb (idle, fire, reload, aim_idle, aim_reload)
+│   ├── weapon_frag_grenade.py    # Genera frag_grenade.glb (grenade_spin)
 │   ├── fx_muzzle_flash.py        # Genera muzzle_flash_fx.glb (flash_burst)
 │   ├── fx_bullet_and_casing.py   # Genera bullet_projectile.glb y shell_casing_eject.glb
+│   ├── fx_grenade_explosion.py   # Genera grenade_explosion_fx.glb (explode_burst)
 │   ├── arena_ruined_city.py      # Genera ruined_city_arena.glb (-col, SpawnPlayer, SpawnAI)
-│   └── render_previews.py        # Renderiza 4 vistas PNG con Cycles CPU
+│   └── render_previews.py        # Renderiza 6 vistas PNG con Cycles CPU
 ├── rust/
 │   ├── Cargo.toml                # Crate cdylib shooter_core (godot 0.5.5, api-4-7)
 │   ├── rust-toolchain.toml       # Toolchain 1.100.0 + targets arm64 y armv7
 │   └── src/
 │       ├── lib.rs                # Registro de extensión GDExtension
-│       ├── combat_math.rs        # Matemática pura de balística y puntuación táctica + unit tests
-│       ├── weapon_rig.rs         # WeaponRig, TracerProjectile y EjectedCasing
-│       ├── player_capsule.rs     # PlayerCapsule (movimiento, cámara OTS/FPS, agachado, retroceso)
-│       └── enemy_ai_capsule.rs   # EnemyAiCapsule (FSM táctica, NavigationAgent3D, LoS, cobertura)
+│       ├── combat_math.rs        # Matemática pura (daño, ADS, slide, granadas, coberturas) + unit tests
+│       ├── grenade.rs            # FragGrenade y ExplosionFx (parábola, rebote, oclusión y daño radial)
+│       ├── weapon_rig.rs         # WeaponRig (incl. aim_idle/aim_reload), TracerProjectile y EjectedCasing
+│       ├── player_capsule.rs     # PlayerCapsule (slide, slide-cancel, dive, ADS, granada, cámara 1P/3P)
+│       └── enemy_ai_capsule.rs   # EnemyAiCapsule (FSM táctica, NavigationAgent3D, LoS, cobertura, granada)
 ├── godot/
-│   ├── project.godot             # Configuración Godot 4.7 Mobile + mapa de entrada
+│   ├── project.godot             # Configuración Godot 4.7 Mobile + mapa de entrada (incl. aim, dive, grenade)
 │   ├── shooter_core.gdextension  # Mapeo de libshooter_core.so (arm64, armv7 y linux host CI)
 │   ├── export_presets.cfg        # Presets Android Debug separados (64 bits arm64-v8a y 32 bits armeabi-v7a)
 │   ├── assets/
@@ -36,16 +39,17 @@ Organización modular de carpetas y propósito de cada archivo en el repositorio
 │   │   ├── player_capsule.tscn   # Nodo PlayerCapsule + SpringArm3D + WeaponRig
 │   │   ├── enemy_ai_capsule.tscn # Nodo EnemyAiCapsule + NavigationAgent3D + WeaponRig
 │   │   ├── ui_menu.tscn          # Menú principal + popups de Ajustes y Controles
-│   │   ├── ui_hud.tscn           # HUD táctico de combate + joystick/botones multitáctiles
+│   │   ├── ui_hud.tscn           # HUD táctico en arco ergonómico + botones circulares con iconos nativos
 │   │   └── ui_end_overlay.tscn   # Pantallas de Pausa y Fin de Partida
 │   └── scripts/
 │       ├── game_manager.gd       # Orquestador del flujo menú -> carga -> combate/reaparición -> resultado
-│       ├── asset_loader.gd       # Carga asíncrona por corrutinas de los 5 .glb
-│       ├── combat_audio.gd       # Audio de combate 2D y espacial 3D (disparos, pasos, recarga, casquillo)
+│       ├── asset_loader.gd       # Carga asíncrona por corrutinas de los 7 .glb
+│       ├── combat_audio.gd       # Audio 2D/3D (OGG CC0 + WAV procedural de slide, dive y explosiones)
 │       ├── arena_controller.gd   # Instancia la ciudad, hornea NavMesh y extrae coberturas
-│       ├── capsule_visual_builder.gd # Crea cápsulas 3D, visor, manos y acopla el rifle + FX
+│       ├── capsule_visual_builder.gd # Crea cápsulas 3D, visor, manos y acopla rifle, FX y granadas
 │       ├── menu_screen.gd        # Lógica del menú principal y popups
-│       ├── touch_hud.gd          # Control multitáctil (girar cámara disparando), mira y marcador
+│       ├── tactical_button_icon.gd # Renderizador vectorial nativo para botones táctiles del HUD
+│       ├── touch_hud.gd          # Control multitáctil (disparo+giro, ADS, slide, dive, granada) y mira
 │       └── end_overlay.gd        # Lógica de pausa y resumen de victoria/derrota
 ├── src/                          # App web mínima "Hello World" (Vite + React + TypeScript)
 ├── README.md

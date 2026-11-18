@@ -78,6 +78,12 @@ jobs:
       - name: Generar escenario de ciudad destruida con coberturas
         run: blender --background --python scripts/blender/arena_ruined_city.py -- godot/assets/models/ruined_city_arena.glb
 
+      - name: Generar granada de fragmentación táctica
+        run: blender --background --python scripts/blender/weapon_frag_grenade.py -- godot/assets/models/frag_grenade.glb
+
+      - name: Generar efecto 3D de explosión de granada
+        run: blender --background --python scripts/blender/fx_grenade_explosion.py -- godot/assets/models/grenade_explosion_fx.glb
+
       - name: Renderizar capturas PNG de vista previa (Cycles CPU)
         run: blender --background --python scripts/blender/render_previews.py -- previews
 

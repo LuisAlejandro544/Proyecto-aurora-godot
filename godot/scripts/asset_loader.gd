@@ -1,9 +1,9 @@
 ## Cargador asíncrono de modelos 3D (.glb) en tiempo de ejecución.
 ##
 ## Utiliza `ResourceLoader.load_threaded_request` con corrutinas (`await`) para cargar
-## el escenario, el rifle y los efectos sin bloquear el hilo principal en Android,
-## evitando referencias estáticas en los archivos `.tscn` ya que los `.glb` se descargan
-## desde GitHub Releases durante la compilación.
+## el escenario, el rifle, la granada de fragmentación y los efectos sin bloquear el hilo
+## principal en Android, evitando referencias estáticas en los `.tscn` ya que los `.glb`
+## se descargan desde GitHub Releases durante la compilación.
 
 class_name AssetLoader
 extends Node
@@ -16,6 +16,8 @@ const MODEL_PATHS := {
 	"muzzle_flash": "res://assets/models/muzzle_flash_fx.glb",
 	"bullet": "res://assets/models/bullet_projectile.glb",
 	"casing": "res://assets/models/shell_casing_eject.glb",
+	"grenade": "res://assets/models/frag_grenade.glb",
+	"explosion": "res://assets/models/grenade_explosion_fx.glb",
 }
 
 const LABELS := {
@@ -24,6 +26,8 @@ const LABELS := {
 	"muzzle_flash": "Preparando fogonazo balístico...",
 	"bullet": "Preparando proyectiles trazadores...",
 	"casing": "Preparando expulsión de casquillos...",
+	"grenade": "Preparando granadas de fragmentación...",
+	"explosion": "Preparando efectos de detonación 3D...",
 }
 
 var loaded_scenes: Dictionary = {}
