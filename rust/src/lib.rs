@@ -1,15 +1,21 @@
-//! Punto de entrada mínimo de GDExtension para conectar Rust con Godot 4.7.
+//! Punto de entrada principal de GDExtension (`shooter_core`) en Rust para Godot 4.7.
 //!
-//! Este archivo NO contiene todavía lógica ni mecánicas del juego; únicamente
-//! registra la librería dinámica (`libshooter_core.so`) para que Godot pueda
-//! inicializarla correctamente al compilar el APK Debug en Android.
+//! Registra los módulos desacoplados del juego:
+//! - `combat_math`: cálculos puros de daño, dispersión y puntuación de cobertura.
+//! - `weapon_rig`: rifle clásico 7.62, fogonazo, trazadoras y casquillos expulsados.
+//! - `player_capsule`: controlador móvil/escritorio de la cápsula del jugador.
+//! - `enemy_ai_capsule`: IA local táctica con navegación, coberturas y flanqueo.
 
 use godot::prelude::*;
 
-/// Estructura marcadora que representa la extensión principal en Rust.
+mod combat_math;
+mod enemy_ai_capsule;
+mod player_capsule;
+mod weapon_rig;
+
+/// Estructura marcadora que registra la librería dinámica en Godot 4.7.
 struct ShooterCoreExtension;
 
-/// Macro de `gdext` que expone el símbolo `gdext_rust_init` requerido por
-/// el archivo `godot/shooter_core.gdextension`.
+/// Macro de `gdext` que expone el símbolo `gdext_rust_init` configurado en `godot/shooter_core.gdextension`.
 #[gdextension]
 unsafe impl ExtensionLibrary for ShooterCoreExtension {}

@@ -1,0 +1,464 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/touch_hud.gd" id="1_hud"]
+
+[sub_resource type="StyleBoxFlat" id="StyleHudCard_1"]
+bg_color = Color(0.07, 0.09, 0.12, 0.82)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.30, 0.38, 0.48, 0.85)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="StyleHpPlayer_1"]
+bg_color = Color(0.16, 0.72, 0.96, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleHpEnemy_1"]
+bg_color = Color(0.96, 0.32, 0.22, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleJoyBase_1"]
+bg_color = Color(0.08, 0.11, 0.15, 0.48)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.45, 0.62, 0.78, 0.72)
+corner_radius_top_left = 80
+corner_radius_top_right = 80
+corner_radius_bottom_right = 80
+corner_radius_bottom_left = 80
+
+[sub_resource type="StyleBoxFlat" id="StyleJoyKnob_1"]
+bg_color = Color(0.28, 0.76, 0.98, 0.82)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.92, 0.97, 1, 0.95)
+corner_radius_top_left = 34
+corner_radius_top_right = 34
+corner_radius_bottom_right = 34
+corner_radius_bottom_left = 34
+
+[sub_resource type="StyleBoxFlat" id="StyleFireBtn_1"]
+bg_color = Color(0.86, 0.26, 0.14, 0.88)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.72, 0.34, 0.95)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="UI_HUD" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_hud")
+
+[node name="DamageVignette" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.85, 0.08, 0.06, 0.45)
+
+[node name="TopMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 86.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 18
+
+[node name="TopRow" type="HBoxContainer" parent="TopMargin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="PlayerCard" type="PanelContainer" parent="TopMargin/TopRow"]
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleHudCard_1")
+
+[node name="VBox" type="VBoxContainer" parent="TopMargin/TopRow/PlayerCard"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HeaderRow" type="HBoxContainer" parent="TopMargin/TopRow/PlayerCard/VBox"]
+layout_mode = 2
+
+[node name="Name" type="Label" parent="TopMargin/TopRow/PlayerCard/VBox/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 13
+text = "JUGADOR (CÁPSULA)"
+
+[node name="StanceLabel" type="Label" parent="TopMargin/TopRow/PlayerCard/VBox/HeaderRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.32, 0.84, 0.98, 1)
+theme_override_font_sizes/font_size = 12
+text = "DE PIE"
+
+[node name="PlayerHpBar" type="ProgressBar" parent="TopMargin/TopRow/PlayerCard/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 14)
+layout_mode = 2
+theme_override_styles/fill = SubResource("StyleHpPlayer_1")
+value = 100.0
+show_percentage = false
+
+[node name="PlayerHpLabel" type="Label" parent="TopMargin/TopRow/PlayerCard/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "100 / 100"
+
+[node name="ScoreCard" type="PanelContainer" parent="TopMargin/TopRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleHudCard_1")
+
+[node name="VBox" type="VBoxContainer" parent="TopMargin/TopRow/ScoreCard"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="ScoreLabel" type="Label" parent="TopMargin/TopRow/ScoreCard/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "TÚ 0  :  0 IA"
+horizontal_alignment = 1
+
+[node name="RoundLabel" type="Label" parent="TopMargin/TopRow/ScoreCard/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.72, 0.28, 1)
+theme_override_font_sizes/font_size = 12
+text = "RONDA 1 (META 2)"
+horizontal_alignment = 1
+
+[node name="EnemyCard" type="PanelContainer" parent="TopMargin/TopRow"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleHudCard_1")
+
+[node name="VBox" type="VBoxContainer" parent="TopMargin/TopRow/EnemyCard"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="EnemyStateLabel" type="Label" parent="TopMargin/TopRow/EnemyCard/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.56, 0.36, 1)
+theme_override_font_sizes/font_size = 13
+text = "IA: Avanzando"
+
+[node name="EnemyHpBar" type="ProgressBar" parent="TopMargin/TopRow/EnemyCard/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 14)
+layout_mode = 2
+theme_override_styles/fill = SubResource("StyleHpEnemy_1")
+value = 100.0
+show_percentage = false
+
+[node name="BtnCamera" type="Button" parent="TopMargin/TopRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(68, 54)
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "CAM"
+
+[node name="BtnPause" type="Button" parent="TopMargin/TopRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(68, 54)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "PAUSA"
+
+[node name="CrosshairRoot" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="CenterDot" type="ColorRect" parent="CrosshairRoot"]
+layout_mode = 0
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 2.0
+offset_bottom = 2.0
+mouse_filter = 2
+color = Color(1, 0.96, 0.85, 0.95)
+
+[node name="TickTop" type="ColorRect" parent="CrosshairRoot"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = -1.5
+offset_top = -20.0
+offset_right = 1.5
+offset_bottom = -9.0
+mouse_filter = 2
+color = Color(0.95, 0.98, 1, 0.9)
+
+[node name="TickBottom" type="ColorRect" parent="CrosshairRoot"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = -1.5
+offset_top = 9.0
+offset_right = 1.5
+offset_bottom = 20.0
+mouse_filter = 2
+color = Color(0.95, 0.98, 1, 0.9)
+
+[node name="TickLeft" type="ColorRect" parent="CrosshairRoot"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = -20.0
+offset_top = -1.5
+offset_right = -9.0
+offset_bottom = 1.5
+mouse_filter = 2
+color = Color(0.95, 0.98, 1, 0.9)
+
+[node name="TickRight" type="ColorRect" parent="CrosshairRoot"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 9.0
+offset_top = -1.5
+offset_right = 20.0
+offset_bottom = 1.5
+mouse_filter = 2
+color = Color(0.95, 0.98, 1, 0.9)
+
+[node name="Hitmarker" type="Control" parent="CrosshairRoot"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+
+[node name="Line1" type="ColorRect" parent="CrosshairRoot/Hitmarker"]
+layout_mode = 0
+offset_left = -10.0
+offset_top = -1.5
+offset_right = 10.0
+offset_bottom = 1.5
+rotation = 0.785398
+pivot_offset = Vector2(10, 1.5)
+mouse_filter = 2
+color = Color(1, 0.36, 0.16, 1)
+
+[node name="Line2" type="ColorRect" parent="CrosshairRoot/Hitmarker"]
+layout_mode = 0
+offset_left = -10.0
+offset_top = -1.5
+offset_right = 10.0
+offset_bottom = 1.5
+rotation = -0.785398
+pivot_offset = Vector2(10, 1.5)
+mouse_filter = 2
+color = Color(1, 0.36, 0.16, 1)
+
+[node name="ReloadBar" type="ProgressBar" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -80.0
+offset_top = 42.0
+offset_right = 80.0
+offset_bottom = 56.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+max_value = 1.0
+show_percentage = false
+
+[node name="JoystickArea" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 22.0
+offset_top = -230.0
+offset_right = 252.0
+offset_bottom = -18.0
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="JoystickBase" type="Panel" parent="JoystickArea"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -78.0
+offset_top = -78.0
+offset_right = 78.0
+offset_bottom = 78.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleJoyBase_1")
+
+[node name="JoystickKnob" type="Panel" parent="JoystickArea/JoystickBase"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 44.0
+offset_top = 44.0
+offset_right = 112.0
+offset_bottom = 112.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleJoyKnob_1")
+
+[node name="RightControls" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -360.0
+offset_top = -280.0
+offset_right = -18.0
+offset_bottom = -18.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="WeaponCard" type="PanelContainer" parent="RightControls"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -196.0
+offset_top = 4.0
+offset_right = 0.0
+offset_bottom = 66.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleHudCard_1")
+
+[node name="VBox" type="VBoxContainer" parent="RightControls/WeaponCard"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="WeaponName" type="Label" parent="RightControls/WeaponCard/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.70, 0.28, 1)
+theme_override_font_sizes/font_size = 12
+text = "RIFLE CLÁSICO 7.62"
+horizontal_alignment = 2
+
+[node name="AmmoLabel" type="Label" parent="RightControls/WeaponCard/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "30 / 120"
+horizontal_alignment = 2
+
+[node name="BtnFire" type="Button" parent="RightControls"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -126.0
+offset_top = -170.0
+offset_right = 0.0
+offset_bottom = -52.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleFireBtn_1")
+text = "DISPARAR"
+
+[node name="BtnReload" type="Button" parent="RightControls"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -246.0
+offset_top = -170.0
+offset_right = -138.0
+offset_bottom = -112.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 14
+text = "RECARGAR"
+
+[node name="BtnCrouch" type="Button" parent="RightControls"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -246.0
+offset_top = -102.0
+offset_right = -138.0
+offset_bottom = -44.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 14
+text = "AGACHAR"
+
+[node name="BtnJump" type="Button" parent="RightControls"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -346.0
+offset_top = -102.0
+offset_right = -258.0
+offset_bottom = -44.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 14
+text = "SALTAR"

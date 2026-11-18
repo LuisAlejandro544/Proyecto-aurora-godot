@@ -1,0 +1,385 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/menu_screen.gd" id="1_menu"]
+
+[sub_resource type="StyleBoxFlat" id="StylePanel_menu"]
+bg_color = Color(0.07, 0.09, 0.12, 0.88)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.32, 0.42, 0.54, 0.85)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+content_margin_left = 22.0
+content_margin_top = 18.0
+content_margin_right = 22.0
+content_margin_bottom = 18.0
+
+[sub_resource type="StyleBoxFlat" id="StylePopup_menu"]
+bg_color = Color(0.06, 0.08, 0.11, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.86, 0.56, 0.18, 0.95)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+content_margin_left = 24.0
+content_margin_top = 20.0
+content_margin_right = 24.0
+content_margin_bottom = 20.0
+
+[sub_resource type="StyleBoxFlat" id="StyleDeploy_btn"]
+bg_color = Color(0.84, 0.44, 0.10, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.78, 0.34, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleChoice_btn"]
+bg_color = Color(0.14, 0.17, 0.22, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.42, 0.48, 0.58, 0.8)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="UI_Menu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="BackdropTint" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.03, 0.04, 0.06, 0.42)
+
+[node name="MainMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 28
+
+[node name="RootHBox" type="HBoxContainer" parent="MainMargin"]
+layout_mode = 2
+theme_override_constants/separation = 28
+
+[node name="LeftColumn" type="VBoxContainer" parent="MainMargin/RootHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.15
+theme_override_constants/separation = 16
+
+[node name="TitlePanel" type="PanelContainer" parent="MainMargin/RootHBox/LeftColumn"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StylePanel_menu")
+
+[node name="TitleVBox" type="VBoxContainer" parent="MainMargin/RootHBox/LeftColumn/TitlePanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TagLabel" type="Label" parent="MainMargin/RootHBox/LeftColumn/TitlePanel/TitleVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.66, 0.24, 1)
+theme_override_font_sizes/font_size = 13
+text = "OPERACIÓN ZONA CERO  //  MODO DUELO TÁCTICO 1 VS 1"
+
+[node name="GameTitle" type="Label" parent="MainMargin/RootHBox/LeftColumn/TitlePanel/TitleVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 42
+text = "IRON VECTOR"
+
+[node name="SubTitle" type="Label" parent="MainMargin/RootHBox/LeftColumn/TitlePanel/TitleVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.76, 0.81, 0.88, 1)
+theme_override_font_sizes/font_size = 15
+text = "Combate urbano en ciudad destruida. Cápsulas tácticas con rifle 7.62 frente a IA local con cobertura real y flanqueo."
+autowrap_mode = 2
+
+[node name="BriefingPanel" type="PanelContainer" parent="MainMargin/RootHBox/LeftColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StylePanel_menu")
+
+[node name="BriefVBox" type="VBoxContainer" parent="MainMargin/RootHBox/LeftColumn/BriefingPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BriefTitle" type="Label" parent="MainMargin/RootHBox/LeftColumn/BriefingPanel/BriefVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.32, 0.78, 0.98, 1)
+theme_override_font_sizes/font_size = 16
+text = "INFORME TÁCTICO DE ARENA Y ARMAMENTO"
+
+[node name="BriefText" type="Label" parent="MainMargin/RootHBox/LeftColumn/BriefingPanel/BriefVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.84, 0.87, 0.92, 1)
+theme_override_font_sizes/font_size = 14
+text = "• Escenario: Ciudad destruida con barreras Jersey, trincheras de sacos, vehículos calcinados y edificios con rampa.\n• Arma principal: Rifle clásico 7.62 (30/120), fogonazo, trazadoras y casquillos expulsados.\n• IA local inteligente: evalúa línea de tiro real, se agacha tras barreras al recargar, dispara en ráfagas y flanquea si te escondes."
+autowrap_mode = 2
+
+[node name="ActionsRow" type="HBoxContainer" parent="MainMargin/RootHBox/LeftColumn"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BtnOpenSettings" type="Button" parent="MainMargin/RootHBox/LeftColumn/ActionsRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("StyleChoice_btn")
+text = "AJUSTES"
+
+[node name="BtnOpenControls" type="Button" parent="MainMargin/RootHBox/LeftColumn/ActionsRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("StyleChoice_btn")
+text = "CONTROLES Y TÁCTICA"
+
+[node name="RightColumn" type="PanelContainer" parent="MainMargin/RootHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.95
+theme_override_styles/panel = SubResource("StylePanel_menu")
+
+[node name="SetupVBox" type="VBoxContainer" parent="MainMargin/RootHBox/RightColumn"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="SetupHeader" type="Label" parent="MainMargin/RootHBox/RightColumn/SetupVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.66, 0.24, 1)
+theme_override_font_sizes/font_size = 18
+text = "CONFIGURACIÓN DE DESPLIEGUE"
+
+[node name="DiffLabel" type="Label" parent="MainMargin/RootHBox/RightColumn/SetupVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Nivel de inteligencia de la IA"
+
+[node name="DiffRow" type="HBoxContainer" parent="MainMargin/RootHBox/RightColumn/SetupVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BtnDiffRecruit" type="Button" parent="MainMargin/RootHBox/RightColumn/SetupVBox/DiffRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+theme_override_styles/normal = SubResource("StyleChoice_btn")
+text = "Recluta"
+
+[node name="BtnDiffTactical" type="Button" parent="MainMargin/RootHBox/RightColumn/SetupVBox/DiffRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+theme_override_styles/normal = SubResource("StyleChoice_btn")
+text = "Táctico"
+
+[node name="BtnDiffVeteran" type="Button" parent="MainMargin/RootHBox/RightColumn/SetupVBox/DiffRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+theme_override_styles/normal = SubResource("StyleChoice_btn")
+text = "Veterano"
+
+[node name="CamLabel" type="Label" parent="MainMargin/RootHBox/RightColumn/SetupVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Perspectiva de cámara"
+
+[node name="CamRow" type="HBoxContainer" parent="MainMargin/RootHBox/RightColumn/SetupVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BtnCamTPS" type="Button" parent="MainMargin/RootHBox/RightColumn/SetupVBox/CamRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+theme_override_styles/normal = SubResource("StyleChoice_btn")
+text = "3ª Persona (Ver Cápsula)"
+
+[node name="BtnCamFPS" type="Button" parent="MainMargin/RootHBox/RightColumn/SetupVBox/CamRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+theme_override_styles/normal = SubResource("StyleChoice_btn")
+text = "1ª Persona"
+
+[node name="RoundsLabel" type="Label" parent="MainMargin/RootHBox/RightColumn/SetupVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Duración del encuentro"
+
+[node name="RoundsRow" type="HBoxContainer" parent="MainMargin/RootHBox/RightColumn/SetupVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BtnRounds3" type="Button" parent="MainMargin/RootHBox/RightColumn/SetupVBox/RoundsRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+theme_override_styles/normal = SubResource("StyleChoice_btn")
+text = "Al mejor de 3"
+
+[node name="BtnRounds5" type="Button" parent="MainMargin/RootHBox/RightColumn/SetupVBox/RoundsRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+theme_override_styles/normal = SubResource("StyleChoice_btn")
+text = "Al mejor de 5"
+
+[node name="Spacer" type="Control" parent="MainMargin/RootHBox/RightColumn/SetupVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BtnDeploy" type="Button" parent="MainMargin/RootHBox/RightColumn/SetupVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleDeploy_btn")
+text = "DESPLEGAR EN COMBATE"
+
+[node name="SettingsPopup" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -230.0
+offset_top = -150.0
+offset_right = 230.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StylePopup_menu")
+
+[node name="VBox" type="VBoxContainer" parent="SettingsPopup"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="SettingsPopup/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.66, 0.24, 1)
+theme_override_font_sizes/font_size = 20
+text = "AJUSTES DE APUNTADO"
+
+[node name="SensRow" type="HBoxContainer" parent="SettingsPopup/VBox"]
+layout_mode = 2
+
+[node name="SensTitle" type="Label" parent="SettingsPopup/VBox/SensRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Sensibilidad táctil"
+
+[node name="SensValueLabel" type="Label" parent="SettingsPopup/VBox/SensRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "1.0x"
+
+[node name="SensSlider" type="HSlider" parent="SettingsPopup/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 0.4
+max_value = 2.4
+step = 0.1
+value = 1.0
+
+[node name="InvertYCheck" type="CheckButton" parent="SettingsPopup/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Invertir eje vertical (Y)"
+
+[node name="BtnCloseSettings" type="Button" parent="SettingsPopup/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "GUARDAR Y CERRAR"
+
+[node name="ControlsPopup" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -270.0
+offset_top = -180.0
+offset_right = 270.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StylePopup_menu")
+
+[node name="VBox" type="VBoxContainer" parent="ControlsPopup"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="ControlsPopup/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.32, 0.78, 0.98, 1)
+theme_override_font_sizes/font_size = 20
+text = "CONTROLES MÓVILES Y CONSEJOS"
+
+[node name="Body" type="Label" parent="ControlsPopup/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "• Joystick izquierdo: mover la cápsula. Empujar al borde superior activa carrera (sprint).\n• Mitad derecha de pantalla: desliza el dedo para girar la cámara y apuntar con precisión.\n• Botón AGACHAR: reduce tu silueta detrás de barreras Jersey y sacos de arena y mejora la precisión del AK-7.62.\n• Botón DISPARAR / RECARGAR / SALTAR / CAM: acciones táctiles directas.\n• Respaldo PC: WASD + Ratón, C (Agachar), R (Recargar), Espacio (Saltar)."
+autowrap_mode = 2
+
+[node name="BtnCloseControls" type="Button" parent="ControlsPopup/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "ENTENDIDO"

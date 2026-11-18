@@ -1,5 +1,104 @@
-[gd_scene format=3]
+[gd_scene load_steps=10 format=3]
 
-; Escena base vacía para que Godot tenga una escena inicial válida al exportar el APK Debug.
+[ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_gm"]
+[ext_resource type="Script" path="res://scripts/asset_loader.gd" id="2_loader"]
+[ext_resource type="PackedScene" path="res://scenes/arena.tscn" id="3_arena"]
+[ext_resource type="PackedScene" path="res://scenes/player_capsule.tscn" id="4_player"]
+[ext_resource type="PackedScene" path="res://scenes/enemy_ai_capsule.tscn" id="5_ai"]
+[ext_resource type="PackedScene" path="res://scenes/ui_menu.tscn" id="6_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ui_hud.tscn" id="7_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui_end_overlay.tscn" id="8_end"]
 
-[node name="Main" type="Node2D"]
+[sub_resource type="StyleBoxFlat" id="StyleLoading_1"]
+bg_color = Color(0.06, 0.08, 0.11, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.86, 0.56, 0.18, 0.9)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+content_margin_left = 28.0
+content_margin_top = 24.0
+content_margin_right = 28.0
+content_margin_bottom = 24.0
+
+[node name="Main" type="Node"]
+script = ExtResource("1_gm")
+
+[node name="AssetLoader" type="Node" parent="."]
+script = ExtResource("2_loader")
+
+[node name="MenuCameraPivot" type="Node3D" parent="."]
+
+[node name="MenuCamera" type="Camera3D" parent="MenuCameraPivot"]
+transform = Transform3D(1, 0, 0, 0, 0.882948, 0.469472, 0, -0.469472, 0.882948, 0, 12.5, 22)
+fov = 62.0
+
+[node name="Arena" parent="." instance=ExtResource("3_arena")]
+
+[node name="PlayerCapsule" parent="." instance=ExtResource("4_player")]
+
+[node name="EnemyAiCapsule" parent="." instance=ExtResource("5_ai")]
+
+[node name="UI_Menu" parent="." instance=ExtResource("6_menu")]
+
+[node name="UI_HUD" parent="." instance=ExtResource("7_hud")]
+
+[node name="UI_EndOverlay" parent="." instance=ExtResource("8_end")]
+
+[node name="UI_Loading" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Bg" type="ColorRect" parent="UI_Loading"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.04, 0.05, 0.07, 1)
+
+[node name="Panel" type="PanelContainer" parent="UI_Loading"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = -78.0
+offset_right = 240.0
+offset_bottom = 78.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleLoading_1")
+
+[node name="VBox" type="VBoxContainer" parent="UI_Loading/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="UI_Loading/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.66, 0.24, 1)
+theme_override_font_sizes/font_size = 20
+text = "IRON VECTOR // INICIALIZANDO"
+horizontal_alignment = 1
+
+[node name="LoadingBar" type="ProgressBar" parent="UI_Loading/Panel/VBox"]
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
+
+[node name="LoadingLabel" type="Label" parent="UI_Loading/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Preparando recursos 3D..."
+horizontal_alignment = 1
+autowrap_mode = 2

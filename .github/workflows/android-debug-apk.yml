@@ -1,16 +1,25 @@
-# Flujo de GitHub Actions EXCLUSIVAMENTE MANUAL (workflow_dispatch) para compilar
-# los modelos 3D, el núcleo en Rust (32 y 64 bits) y empaquetar un APK Debug con Godot 4.7.2.
-# No se dispara en push ni pull_request.
+# Flujo de GitHub Actions EXCLUSIVAMENTE MANUAL (workflow_dispatch) para:
+# 1. Descargar los modelos 3D (.glb) directamente desde GitHub Releases (no desde el repo).
+# 2. Compilar el núcleo en Rust 1.100.0 (Debug) para Android 64-bit y 32-bit con caché.
+# 3. Empaquetar el APK Debug usando Godot 4.7.2-stable headless.
 
 name: Build Android Debug APK
 
 on:
   workflow_dispatch:
+    inputs:
+      assets_tag:
+        description: 'Tag del Release de assets 3D (vacío = usar el último Release)'
+        required: false
+        default: ''
+        type: string
 
 jobs:
   build-android-debug:
     name: Compilar Rust + Godot 4.7.2 (APK Debug)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     env:
       GODOT_VERSION: "4.7.2-stable"
@@ -26,18 +35,57 @@ jobs:
       - name: Descargar código del repositorio
         uses: actions/checkout@v4
 
-      # 1. Java 17 requerido por las herramientas de firma y exportación de Godot 4.7
+      # 1. Descargar los modelos GLB desde GitHub Releases (con caché por Tag resuelto)
+      - name: Resolver Tag de Release de Assets 3D
+        id: resolve-assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_TAG: ${{ inputs.assets_tag }}
+        run: |
+          if [ -n "$INPUT_TAG" ]; then
+            RESOLVED_TAG="$INPUT_TAG"
+          else
+            RESOLVED_TAG="$(gh release list --repo "$GITHUB_REPOSITORY" --limit 1 --json tagName --jq '.[0].tagName')"
+          fi
+
+          if [ -z "$RESOLVED_TAG" ] || [ "$RESOLVED_TAG" = "null" ]; then
+            echo "::error::No se encontró ningún GitHub Release con assets 3D. Ejecuta primero el Action 'Generate & Release Blender 3D Assets' indicando un Tag."
+            exit 1
+          fi
+          echo "tag=$RESOLVED_TAG" >> "$GITHUB_OUTPUT"
+          echo "Usando Release de assets: $RESOLVED_TAG"
+
+      - name: Caché de assets 3D (.glb) del Release
+        id: cache-release-assets
+        uses: actions/cache@v4
+        with:
+          path: godot/assets/models
+          key: release-glb-${{ steps.resolve-assets.outputs.tag }}
+
+      - name: Descargar modelos .glb desde GitHub Release
+        if: steps.cache-release-assets.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p godot/assets/models
+          gh release download "${{ steps.resolve-assets.outputs.tag }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern "*.glb" \
+            --dir godot/assets/models \
+            --clobber
+          ls -lh godot/assets/models
+
+      # 2. Java 17 requerido por las herramientas de firma y exportación de Godot 4.7
       - name: Configurar Java 17 (Temurin)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 2. Android SDK base
+      # 3. Android SDK base y caché de NDK / Platform / Build-Tools
       - name: Configurar Android SDK
         uses: android-actions/setup-android@v3
 
-      # 3. Caché del NDK, plataforma y build-tools de Android para no re-descargar en cada build
       - name: Caché de Android NDK y SDK components
         id: cache-android-ndk
         uses: actions/cache@v4
@@ -61,7 +109,7 @@ jobs:
         run: |
           echo "ANDROID_NDK_HOME=${{ env.ANDROID_HOME }}/ndk/${{ env.ANDROID_NDK_VERSION }}" >> $GITHUB_ENV
 
-      # 4. Rust 1.100.0 con targets ARM64 (64 bits) y ARMv7 (32 bits)
+      # 4. Rust 1.100.0 con targets ARM64 (64 bits) y ARMv7 (32 bits) + caché Cargo
       - name: Configurar Rust ${{ env.RUST_VERSION }}
         uses: dtolnay/rust-toolchain@master
         with:
@@ -70,26 +118,26 @@ jobs:
             aarch64-linux-android
             armv7-linux-androideabi
 
-      # 5. Caché de dependencias de Cargo y artefactos compilados en rust/target
       - name: Caché de dependencias Rust
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: "rust -> target"
 
-      # 6. Instalación rápida de cargo-ndk (binario precompilado)
       - name: Instalar cargo-ndk
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-ndk
 
-      # 7. Compilar la librería dinámica (.so) en modo DEBUG para 64 y 32 bits
-      - name: Compilar núcleo Rust (Debug) para arm64-v8a y armeabi-v7a
+      # 5. Ejecutar pruebas unitarias en Rust y compilar librerías (.so) Debug
+      - name: Ejecutar tests unitarios y compilar núcleo Rust (Linux host + Android 64/32 bits)
         run: |
           NDK_PREBUILT="${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64"
           export CLANG_PATH="${NDK_PREBUILT}/bin/clang"
           export LIBCLANG_PATH="${NDK_PREBUILT}/lib"
 
           cd rust
+          cargo test --lib
+          cargo build
           cargo ndk \
             -t arm64-v8a \
             -t armeabi-v7a \
@@ -97,7 +145,7 @@ jobs:
             -o ../godot/bin \
             build
 
-      # 8. Caché del binario headless de Godot 4.7.2 y sus plantillas de exportación
+      # 6. Caché del binario headless de Godot 4.7.2 y sus plantillas de exportación
       - name: Caché de Godot ${{ env.GODOT_VERSION }} y Export Templates
         id: cache-godot
         uses: actions/cache@v4
@@ -127,7 +175,7 @@ jobs:
       - name: Añadir Godot al PATH
         run: echo "$HOME/godot" >> $GITHUB_PATH
 
-      # 9. Keystore de depuración y configuración headless de editor_settings-4.7.tres
+      # 7. Keystore de depuración y configuración headless de editor_settings-4.7.tres
       - name: Generar Debug Keystore y configurar Godot 4.7 para Android
         run: |
           mkdir -p ~/.android ~/.config/godot
@@ -153,53 +201,14 @@ jobs:
             'export/android/debug_keystore_pass = "android"' \
             > ~/.config/godot/editor_settings-4.7.tres
 
-      # 10. Caché de modelos 3D GLB generados con Blender headless (se regeneran solo si cambian scripts/blender)
-      - name: Caché de modelos 3D (GLB)
-        id: cache-models
-        uses: actions/cache@v4
-        with:
-          path: godot/assets/models
-          key: ${{ runner.os }}-glb-models-${{ hashFiles('scripts/blender/**') }}
-
-      - name: Instalar dependencias de Blender (si no hay caché de modelos)
-        if: steps.cache-models.outputs.cache-hit != 'true'
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq xz-utils libxi6 libgl1 libxxf86vm1 libxfixes3 libxrender1 libxkbcommon0 libsm6 libgomp1
-
-      - name: Caché de Blender 5.2.4
-        if: steps.cache-models.outputs.cache-hit != 'true'
-        id: cache-blender
-        uses: actions/cache@v4
-        with:
-          path: ~/blender-5.2.4
-          key: ${{ runner.os }}-blender-5.2.4
-
-      - name: Descargar Blender 5.2.4
-        if: steps.cache-models.outputs.cache-hit != 'true' && steps.cache-blender.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p ~/blender-5.2.4
-          curl -sL "https://download.blender.org/release/Blender5.2/blender-5.2.4-linux-x64.tar.xz" -o /tmp/blender.tar.xz
-          tar -xf /tmp/blender.tar.xz -C ~/blender-5.2.4 --strip-components=1
-          rm -f /tmp/blender.tar.xz
-
-      - name: Generar modelos 3D GLB con scripts de Blender
-        if: steps.cache-models.outputs.cache-hit != 'true'
-        run: |
-          BLENDER_BIN="$HOME/blender-5.2.4/blender"
-          "$BLENDER_BIN" --background --python scripts/blender/weapon_classic_rifle.py -- godot/assets/models/classic_assault_rifle.glb
-          "$BLENDER_BIN" --background --python scripts/blender/fx_muzzle_flash.py -- godot/assets/models/muzzle_flash_fx.glb
-          "$BLENDER_BIN" --background --python scripts/blender/fx_bullet_and_casing.py
-          "$BLENDER_BIN" --background --python scripts/blender/arena_ruined_city.py -- godot/assets/models/ruined_city_arena.glb
-
-      # 11. Importar proyecto (registra .gdextension y .glb) y exportar APK Debug
+      # 8. Importar proyecto (registra .gdextension y .glb) y exportar APK Debug
       - name: Importar recursos y exportar APK Debug con Godot
         run: |
           mkdir -p godot/build/android
           godot --headless --path godot --import
           godot --headless --verbose --path godot --export-debug "Android" "$GITHUB_WORKSPACE/godot/${{ env.APK_OUTPUT }}"
 
-      # 11. Subir el APK Debug compilado como artefacto descargable del Action
+      # 9. Subir el APK Debug compilado como artefacto descargable
       - name: Subir APK Debug generado
         uses: actions/upload-artifact@v4
         with:

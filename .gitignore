@@ -9,6 +9,7 @@ coverage/
 .godot/
 godot/.godot/
 godot/assets/models/
+*.glb
 godot/bin/
 godot/build/
 previews/

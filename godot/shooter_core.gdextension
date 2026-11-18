@@ -11,5 +11,5 @@ android.debug.arm64 = "res://bin/arm64-v8a/libshooter_core.so"
 android.debug.armeabi-v7a = "res://bin/armeabi-v7a/libshooter_core.so"
 android.release.arm64 = "res://bin/arm64-v8a/libshooter_core.so"
 android.release.armeabi-v7a = "res://bin/armeabi-v7a/libshooter_core.so"
-; Si algún día abres el proyecto en un PC Linux para depurar, descomenta la siguiente línea:
-; linux.debug.x86_64 = "res://../rust/target/debug/libshooter_core.so"
+; Permite que Godot headless en Linux (CI/editor) reconozca PlayerCapsule, EnemyAiCapsule y WeaponRig al importar/exportar.
+linux.debug.x86_64 = "res://../rust/target/debug/libshooter_core.so"
